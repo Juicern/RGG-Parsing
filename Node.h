@@ -1,15 +1,13 @@
+#pragma once
 #include <vector>
+#include "Edge.h"
 
 struct Node {
-	SuperVertex* super_v;
+	Vertex* super_v;
 	std::vector<Vertex*> vertices;
-};
-
-struct SuperVertex {
-	bool marked;
-	std::vector<Node*> adjacents;
 };
 
 struct Vertex {
 	bool marked;
+	std::vector<Edge*> edges;
 };
