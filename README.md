@@ -9,7 +9,7 @@ In reading the visual language literature, or any book on software engineering, 
 
 Context-free graph grammar, as we all know, has productions in which every left-hand side consists of a single non-terminal node. It is straightforward but awkward to define the syntax of a large portion of visual languages and too restrictive. Therefore we allow for *context-sensitive graph grammar* , in which both left- and right-hand side of production are graphs, even though the performance penalty might be serious.
 
-RGG is the most popular context-sensitive graph grammar, which facilitate the complexity of LGG(Layered graph grammar) by adding some mechanisms.
+RGG is the most popular context-sensitive graph grammar, which facilitates the complexity of LGG(Layered graph grammar) by adding some mechanisms.
 
 This project is divided into 2 parts:
 
