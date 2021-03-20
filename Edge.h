@@ -1,6 +1,6 @@
 #pragma once
 #include "Node.h"
 
-struct Edge {
+class Edge {
 	std::pair<Vertex*, Vertex*> edge;
 };

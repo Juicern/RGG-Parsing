@@ -2,12 +2,12 @@
 #include <vector>
 #include "Edge.h"
 
-struct Node {
+class Node {
 	Vertex* super_v;
 	std::vector<Vertex*> vertices;
 };
 
-struct Vertex {
+class Vertex{
 	bool marked;
 	std::vector<Edge*> edges;
 };
