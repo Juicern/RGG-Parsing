@@ -1,83 +1,175 @@
-#pragma once
-#include <vector>
+#include <iostream>
 #include <string>
-#include <unordered_set>
+#include <queue>
+#include <unordered_map>
+#include <vector>
+#define DEFAULT_SIZE 4
+using namespace std;
 
-class Edge {
-public:
-	int adjvex;
-	std::pair<Node, Node> nodes;
-	std::unordered_set<Edge> next;
-	// Constructor
-	Edge(int a) :adjvex(a) {}
-	Edge(int a, std::pair<Node, Node> ns) : adjvex(a), nodes(ns) {}
-	Edge(int a, std::unordered_set<Edge>& n) : adjvex(a), next(n) {}
+// definition of Edge
+struct Edge {
+	int adjVex;
+	Edge* first_edge;
+
+	Edge() : first_edge(nullptr) {}
+	Edge(int _adjVex, Edge* _next_edge = nullptr) : adjVex(_adjVex), first_edge(_next_edge) {}
 };
 
-// one Node includes a super vertex and some vertices;
-class Node {
-public:
-	std::string data;
-	Vertex super_v;
-	std::unordered_set<Vertex> vertices;
-	std::unordered_set<Edge> edges; // The edges of Node include all edges of its super vertex and vertices
-	// Constructor
-	Node() = default;
-	Node(std::string d) : data(d) {}
-	Node(std::string d, Vertex sv) : data(d) {}
-	Node(std::string d, Vertex sv, std::unordered_set<Vertex> vs) : data(d), super_v(sv), vertices(vs) {}
+// definition of Node
+struct Node {
+	string data;
+	Edge* first_edge;
+
+	Node() : first_edge(nullptr) {}
+	Node(string _data, Edge* _first_edge = nullptr) : data(_data), first_edge(_first_edge) {}
 };
 
-class Vertex {
-public:
-	Node parent;
-	bool marked;
-	std::unordered_set<Edge> edges;
-	// Constructor
-	Vertex() = default;
-	Vertex(Node p, bool m = false) : parent(p), marked(m) {}
-};
+enum Visit_Status{VISITED, UNVISITED};
 
 class Graph {
 public:
-	std::vector<Node> nodes;
-	int vex_num;
+	Graph();
+	Graph(vector<string> _nodes);
+	~Graph();
+	void insert_edge(int node1, int node2);
+	void delete_edge(int node1, int node2);
+	void show();
+	void dfs();
+	void bfs();
+private:
+	unordered_map<int, Visit_Status> tag;
+	unordered_map<int, Node> node_table;
+	int node_num;
 	int edge_num;
+
+	void dfs(int start_node);
+	void bfs(int start_node);
 };
 
-std::vector<Vertex> edge_get_adjacent_vertices(const Edge& edge) {
-	std::vector<Vertex> vertices;
-	auto s_edge1 = edge.nodes.first.super_v.edges;
-	auto s_edge2 = edge.nodes.second.super_v.edges;
-	if (s_edge1.find(edge) != s_edge1.end()) {
-		vertices.push_back(s_edge1);
-	}
-	if (s_edge2.find(edge) != s_edge1.end()) {
-		vertices.push_back(s_edge1);
-	}
-	auto vs1 = edge.nodes.first.vertices;
-	auto vs2 = edge.nodes.second.vertices;
-	for (const auto& vertex : vs1) {
-		if (vertex.edges.find(edge) != vertex.edges.end()) {
-			vertices.push_back(vertex);
-		}
-	}
-	for (const auto& vertex : vs2) {
-		if (vertex.edges.find(edge) != vertex.edges.end()) {
-			vertices.push_back(vertex);
-		}
-	}
-	return vertices;
+Graph:: Graph() {
+	node_num = 0;
+	edge_num = 0;
 }
 
-std::vector<Vertex> vertex_get_adjacent_vertices(const Vertex& vertex) {
-	std::vector<Vertex> vertices;
-	for (const auto& edge : vertex.edges) {
-		for (const auto& v : edge_get_adjacent_vertices(edge)) {
-			if (&v != &vertex) {
-				vertices.push_back(v);
+Graph::Graph(vector<string> _nodes) {
+	node_num = _nodes.size();
+	edge_num = 0;
+	for (int i = 0; i < node_num; i++) {
+		tag[i] = UNVISITED;
+		node_table[i] = Node(_nodes[i]);
+	}
+}
+
+Graph::~Graph() {
+	tag.clear();
+	node_table.clear();
+}
+
+void Graph::insert_edge(int node1, int node2) {
+	node_table[node1].first_edge = new Edge(node2, node_table[node1].first_edge);
+	node_table[node2].first_edge = new Edge(node1, node_table[node2].first_edge);
+	edge_num++;
+}
+
+void Graph::delete_edge(int node1, int node2) {
+	Edge* p = node_table[node1].first_edge;
+	Edge* pre = new Edge();
+	pre->first_edge = p;
+	while (p && p->adjVex != node2) {
+		pre = p;
+		p = p->first_edge;
+	}
+	if (p) {
+		pre->first_edge = p->first_edge;
+		delete(p);
+		node_table[node1].first_edge = pre->first_edge;
+	}
+	
+	p = node_table[node2].first_edge;
+	pre->first_edge = p;
+	while (p && p->adjVex != node1) {
+		pre = p;
+		p = p->first_edge;
+	}
+	if (p) {
+		pre->first_edge = p->first_edge;
+		delete(p);
+		node_table[node2].first_edge = pre->first_edge;
+	}
+	delete(pre);	
+}
+
+void Graph::show() {
+	for (const auto& [_, node] : node_table) {
+		cout << node.data << ":";
+		Edge* p = node.first_edge;
+		while (p) {
+			cout << p->adjVex << " ";
+			p = p->first_edge;
+		}
+		cout << endl;
+	}
+}
+
+void Graph::dfs(int start_node) {
+	if (tag[start_node] == UNVISITED) {
+		cout << node_table[start_node].data << " ";
+		tag[start_node] = VISITED;
+		Edge* p = node_table[start_node].first_edge;
+		while (p) {
+			dfs(p->adjVex);
+			p = p->first_edge;
+		}
+	}
+}
+
+void Graph::dfs() {
+	for (const auto& [i, _] : node_table) {
+		if (tag[i] == UNVISITED) {
+			dfs(i);
+		}
+		cout << endl;
+	}
+	for (auto& [i, _] : tag) {
+		tag[i] = UNVISITED;
+	}
+}
+
+void Graph::bfs(int start_node) {
+	if (tag[start_node] != VISITED) {
+		queue<int> q;
+		q.push(start_node);
+		tag[start_node] = VISITED;
+		cout << node_table[start_node].data << " ";
+		Edge* p;
+		while (!q.empty()) {
+			int i = q.front();
+			q.pop();
+			p = node_table[i].first_edge;
+			while (p) {
+				if (tag[p->adjVex] == UNVISITED) {
+					tag[p->adjVex] = VISITED;
+					cout << node_table[p->adjVex].data;
+					q.push(p->adjVex);
+				}
+				p = p->first_edge;
 			}
 		}
 	}
-	return vertices;
 }
+void Graph::bfs() {
+	for (const auto& [i, _] : node_table) {
+		if (tag[i] == UNVISITED) {
+			bfs(i);
+			cout << endl;
+		}
+	}
+	for (const auto& [i, _] : tag) {
+		tag[i] = UNVISITED;
+	}
+ }
+
+
+
+
+
