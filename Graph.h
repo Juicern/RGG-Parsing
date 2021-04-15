@@ -15,6 +15,9 @@ struct Edge {
 
 	Edge() : first_edge(nullptr) {}
 	Edge(int _adjVex, Edge* _next_edge = nullptr, string v_data = NULLSTR) : adjVex(_adjVex), first_edge(_next_edge), vertex_data(v_data) {}
+	~Edge() {
+		delete[] first_edge;
+	}
 };
 
 // definition of Vertex
@@ -25,11 +28,14 @@ struct Vertex {
 
 	Vertex() {}
 	Vertex(string _data, bool _is_marked = false, Vertex* _first_vertex = nullptr) : data(_data), is_marked(_is_marked), first_vertex(_first_vertex) {}
+	~Vertex() {
+		delete[] first_vertex;
+	}
 };
 
 // definition of Node
 struct Node {
-	string data;
+	string data; 
 	Edge* first_edge;
 	Vertex* first_vertex;
 	bool is_terminal;
@@ -37,6 +43,10 @@ struct Node {
 
 	Node() : first_edge(nullptr) {}
 	Node(string _data, bool _is_terminal = true, Edge* _first_edge = nullptr) : data(_data), is_terminal(_is_terminal), first_edge(_first_edge) {}
+	~Node() {
+		delete[] first_edge;
+		delete[] first_vertex;
+	}
 };
 
 enum Visit_Status{VISITED, UNVISITED};
