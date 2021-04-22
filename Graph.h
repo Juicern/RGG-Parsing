@@ -10,43 +10,33 @@ using namespace std;
 // definition of Edge
 struct Edge {
 	int adjVex;
-	Edge* first_edge;
+	shared_ptr<Edge> first_edge = nullptr;
 	string vertex_data;
 
 	Edge() : first_edge(nullptr) {}
-	Edge(int _adjVex, Edge* _next_edge = nullptr, string v_data = NULLSTR) : adjVex(_adjVex), first_edge(_next_edge), vertex_data(v_data) {}
-	~Edge() {
-		delete[] first_edge;
-	}
+	Edge(int _adjVex, shared_ptr<Edge> _next_edge = nullptr, string v_data = NULLSTR) : adjVex(_adjVex), first_edge(_next_edge), vertex_data(v_data) {}
 };
 
 // definition of Vertex
 struct Vertex {
 	string data;
 	bool is_marked;
-	Vertex* first_vertex;
+	shared_ptr<Vertex> first_vertex = nullptr;
 
 	Vertex() {}
-	Vertex(string _data, bool _is_marked = false, Vertex* _first_vertex = nullptr) : data(_data), is_marked(_is_marked), first_vertex(_first_vertex) {}
-	~Vertex() {
-		delete[] first_vertex;
-	}
+	Vertex(string _data, bool _is_marked = false, shared_ptr<Vertex> _first_vertex = nullptr) : data(_data), is_marked(_is_marked), first_vertex(_first_vertex) {}
 };
 
 // definition of Node
 struct Node {
 	string data; 
-	Edge* first_edge;
-	Vertex* first_vertex;
+	shared_ptr<Edge> first_edge = nullptr;
+	shared_ptr<Vertex> first_vertex = nullptr;
 	bool is_terminal;
 	bool is_marked;
 
 	Node() : first_edge(nullptr) {}
-	Node(string _data, bool _is_terminal = true, Edge* _first_edge = nullptr) : data(_data), is_terminal(_is_terminal), first_edge(_first_edge) {}
-	~Node() {
-		delete[] first_edge;
-		delete[] first_vertex;
-	}
+	Node(string _data, bool _is_terminal = true, shared_ptr<Edge> _first_edge = nullptr) : data(_data), is_terminal(_is_terminal), first_edge(_first_edge) {}
 };
 
 enum Visit_Status{VISITED, UNVISITED};
@@ -56,8 +46,8 @@ public:
 	Graph();
 	Graph(vector<string> _nodes);
 	~Graph();
-	void insert_edge(int node1, int node2, string v_data1 = NULLSTR, string v_data2 = NULLSTR);
-	void delete_edge(int node1, int node2, string v_data1 = NULLSTR, string v_data2 = NULLSTR);
+	void insert_edge(int node1, int node2, string v_data1, string v_data2);
+	void delete_edge(int node1, int node2, string v_data1, string v_data2);
 	int insert_node(string data);
 	void delete_node(int node1);
 	void insert_vertex(int node, string data, bool is_marked);
@@ -96,14 +86,14 @@ Graph::~Graph() {
 }
 
 void Graph::insert_edge(int node1, int node2, string v_data1 = NULLSTR, string v_data2 = NULLSTR) {
-	node_table[node1].first_edge = new Edge(node2, node_table[node1].first_edge, v_data2);
-	node_table[node2].first_edge = new Edge(node1, node_table[node2].first_edge, v_data1);
+	node_table[node1].first_edge = make_shared<Edge>(Edge(node2, node_table[node1].first_edge, v_data2));
+	node_table[node2].first_edge = make_shared<Edge>(Edge(node1, node_table[node2].first_edge, v_data1));
 	edge_num++;
 }
 
 void Graph::delete_edge(int node1, int node2, string v_data1 = NULLSTR, string v_data2 = NULLSTR) {
-	Edge* p = node_table[node1].first_edge;
-	Edge* pre = new Edge();
+	auto p = node_table[node1].first_edge;
+	auto pre = make_shared<Edge>();
 	pre->first_edge = p;
 	while (p && p->adjVex != node2 && p->vertex_data == v_data2) {
 		pre = p;
@@ -111,7 +101,6 @@ void Graph::delete_edge(int node1, int node2, string v_data1 = NULLSTR, string v
 	}
 	if (p) {
 		pre->first_edge = p->first_edge;
-		delete(p);
 		node_table[node1].first_edge = pre->first_edge;
 	}
 	
@@ -123,10 +112,8 @@ void Graph::delete_edge(int node1, int node2, string v_data1 = NULLSTR, string v
 	}
 	if (p) {
 		pre->first_edge = p->first_edge;
-		delete(p);
 		node_table[node2].first_edge = pre->first_edge;
-	}
-	delete(pre);	
+	}	
 }
 
 int Graph::insert_node(string data) {
@@ -147,7 +134,7 @@ int Graph::insert_node(string data) {
 }
 
 void Graph::delete_node(int node) {
-	Edge* p = node_table[node].first_edge;
+	auto p = node_table[node].first_edge;
 	while (p) {
 		delete_edge(node, p->adjVex);
 		p = p->first_edge;
@@ -160,11 +147,11 @@ void Graph::delete_node(int node) {
 }
 
 void Graph::insert_vertex(int node, string data, bool is_marked = false) {
-	node_table[node].first_vertex = new Vertex(data, is_marked, node_table[node].first_vertex);
+	node_table[node].first_vertex = make_shared<Vertex>(Vertex(data, is_marked, node_table[node].first_vertex));
 }
 void Graph::delete_vertex(int node, string _data) {
-	Vertex* pre = new Vertex();
-	Vertex* p = node_table[node].first_vertex;
+	auto pre = make_shared<Vertex>();
+	auto p = node_table[node].first_vertex;
 	pre->first_vertex = p;
 	while (p && p->data != _data) {
 		pre = p;
@@ -172,15 +159,13 @@ void Graph::delete_vertex(int node, string _data) {
 	}
 	if (p) {
 		pre->first_vertex = p->first_vertex;
-		delete(p);
 	}
-	delete(pre);
 }
 
 void Graph::show() {
 	for (const auto& [_, node] : node_table) {
 		cout << node.data << ":";
-		Edge* p = node.first_edge;
+		auto p = node.first_edge;
 		while (p) {
 			cout << p->adjVex << " ";
 			p = p->first_edge;
@@ -193,7 +178,7 @@ void Graph::dfs(int start_node) {
 	if (tag[start_node] == UNVISITED) {
 		cout << node_table[start_node].data << " ";
 		tag[start_node] = VISITED;
-		Edge* p = node_table[start_node].first_edge;
+		auto p = node_table[start_node].first_edge;
 		while (p) {
 			dfs(p->adjVex);
 			p = p->first_edge;
@@ -219,7 +204,7 @@ void Graph::bfs(int start_node) {
 		q.push(start_node);
 		tag[start_node] = VISITED;
 		cout << node_table[start_node].data << " ";
-		Edge* p;
+		shared_ptr<Edge> p;
 		while (!q.empty()) {
 			int i = q.front();
 			q.pop();
