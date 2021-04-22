@@ -1,238 +1,216 @@
-#include <iostream>
-#include <string>
-#include <queue>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
-constexpr auto NULLSTR = "-";
+#include <string>
+#include <unordered_set>
+#include <unordered_map>
+vector<Graph> find_redex(const Graph&, const Graph&, const vector<Production>&);
+vector<Graph> replace_redex(const Graph&, const vector<Graph>&, const Graph&);
+void delete_redex(Graph&, const Graph&);
+void add_sub_graph(Graph&, const Graph&);
+vector<Vertex> get_vertices(const vector<char>&, const vector<int>&);
+vector<Node> get_nodes(const vector<int>&, const vector<bool>&, const vector<string>&, const vector<vector<Vertex>>&);
+vector<Edge> get_edges(const vector<int>&, const vector<Node>&, const vector<Vertex>&, const vector<Node>&, const vector<Vertex>&);
+vector<Edge> get_edges(const vector<int>&, const vector<pair<Node, const Vertex>>&, const vector<pair<Node, Vertex>>&);
+
 using namespace std;
 
-// definition of Edge
-struct Edge {
-	int adjVex;
-	shared_ptr<Edge> first_edge = nullptr;
-	string vertex_data;
-
-	Edge() : first_edge(nullptr) {}
-	Edge(int _adjVex, shared_ptr<Edge> _next_edge = nullptr, string v_data = NULLSTR) : adjVex(_adjVex), first_edge(_next_edge), vertex_data(v_data) {}
-};
-
-// definition of Vertex
-struct Vertex {
-	string data;
-	bool is_marked;
-	shared_ptr<Vertex> first_vertex = nullptr;
+class Vertex {
+public:
+	char label; // if key == '0' : superVertex, else : simple vertex 
+	int mark; // 0-> no marked 
 
 	Vertex() {}
-	Vertex(string _data, bool _is_marked = false, shared_ptr<Vertex> _first_vertex = nullptr) : data(_data), is_marked(_is_marked), first_vertex(_first_vertex) {}
+	Vertex(char _label, int _mark) : label(_label), mark(_mark) {}
 };
 
-// definition of Node
-struct Node {
-	string data; 
-	shared_ptr<Edge> first_edge = nullptr;
-	shared_ptr<Vertex> first_vertex = nullptr;
-	bool is_terminal;
-	bool is_marked;
+class Node {
+public:
+	int id;
+	bool is_termimal;
+	string label;
+	vector<Vertex> vertices;
 
-	Node() : first_edge(nullptr) {}
-	Node(string _data, bool _is_terminal = true, shared_ptr<Edge> _first_edge = nullptr) : data(_data), is_terminal(_is_terminal), first_edge(_first_edge) {}
+	Node() {}
+	Node(int _id, bool _is_terminal, string _label, vector<Vertex> _vertices) : id(_id), is_termimal(_is_terminal), label(_label), vertices(_vertices) {}
 };
 
-enum Visit_Status{VISITED, UNVISITED};
+class Edge {
+public:
+	int id;
+	pair<int, Vertex> mark; // 不需要删除：0， 悬边：连接的被删结点的id， 需要被删的边： -1
+	pair<Node, Vertex> node1;
+	pair<Node, Vertex> node2;
+
+	Edge() {}
+	Edge(int _id, pair<Node, Vertex> _node1, pair<Node, Vertex> _node2) : id(_id), node1(_node1), node2(_node2) {}
+};
 
 class Graph {
 public:
-	Graph();
-	Graph(vector<string> _nodes);
-	~Graph();
-	void insert_edge(int node1, int node2, string v_data1, string v_data2);
-	void delete_edge(int node1, int node2, string v_data1, string v_data2);
-	int insert_node(string data);
-	void delete_node(int node1);
-	void insert_vertex(int node, string data, bool is_marked);
-	void delete_vertex(int node, string data);
-	void show();
-	void dfs();
-	void bfs();
-private:
-	unordered_map<int, Visit_Status> tag;
-	unordered_map<int, Node> node_table;
-	unordered_set<int> unused_keys;
-	int node_num;
-	int edge_num;
+	vector<Node> nodes;
+	vector<Edge> edges;
 
-	void dfs(int start_node);
-	void bfs(int start_node);
+	Graph() {};
+	Graph(vector<Node> _nodes, vector<Edge> _edges) : nodes(_nodes), edges(_edges) {}
 };
 
-Graph:: Graph() {
-	node_num = 0;
-	edge_num = 0;
+class Production {
+public:
+	Graph l_graph;
+	Graph r_graph;
+};
+// find the redex
+vector<Graph> find_redex(Graph& host_graph, Graph& sub_graph, vector<Production>& production);
+
+vector<Graph> replace_redex(const Graph& host_graph, const vector<Graph>& redexes, const Graph& sub_graph) {
+	vector<Graph> graphs;
+	for (auto& redex : redexes) {
+		Graph temp = host_graph;
+		delete_redex(temp, redex);
+		add_sub_graph(temp, sub_graph);
+		graphs.push_back(temp);
+	}
+	return graphs;
 }
 
-Graph::Graph(vector<string> _nodes) {
-	node_num = _nodes.size();
-	edge_num = 0;
-	for (int i = 0; i < node_num; i++) {
-		tag[i] = UNVISITED;
-		node_table[i] = Node(_nodes[i]);
-	}
-}
-
-Graph::~Graph() {
-	tag.clear();
-	node_table.clear();
-}
-
-void Graph::insert_edge(int node1, int node2, string v_data1 = NULLSTR, string v_data2 = NULLSTR) {
-	node_table[node1].first_edge = make_shared<Edge>(Edge(node2, node_table[node1].first_edge, v_data2));
-	node_table[node2].first_edge = make_shared<Edge>(Edge(node1, node_table[node2].first_edge, v_data1));
-	edge_num++;
-}
-
-void Graph::delete_edge(int node1, int node2, string v_data1 = NULLSTR, string v_data2 = NULLSTR) {
-	auto p = node_table[node1].first_edge;
-	auto pre = make_shared<Edge>();
-	pre->first_edge = p;
-	while (p && p->adjVex != node2 && p->vertex_data == v_data2) {
-		pre = p;
-		p = p->first_edge;
-	}
-	if (p) {
-		pre->first_edge = p->first_edge;
-		node_table[node1].first_edge = pre->first_edge;
-	}
-	
-	p = node_table[node2].first_edge;
-	pre->first_edge = p;
-	while (p && p->adjVex != node1 && p->vertex_data == v_data1) {
-		pre = p;
-		p = p->first_edge;
-	}
-	if (p) {
-		pre->first_edge = p->first_edge;
-		node_table[node2].first_edge = pre->first_edge;
-	}	
-}
-
-int Graph::insert_node(string data) {
-	++node_num;
-	if (unused_keys.size() == 0) {
-		node_table[node_num - 1] = Node(data);
-		tag[node_num - 1] = UNVISITED;
-		return node_num - 1;
-	}
-	else {
-		int key = *unused_keys.begin();
-		unused_keys.erase(key);
-		node_table[key] = Node(data);
-		tag[key] = UNVISITED;
-		unused_keys.insert(node_num - 1);
-		return key;
-	}
-}
-
-void Graph::delete_node(int node) {
-	auto p = node_table[node].first_edge;
-	while (p) {
-		delete_edge(node, p->adjVex);
-		p = p->first_edge;
-		--edge_num;
-	}
-	node_table.erase(node);
-	tag.erase(node);
-	unused_keys.insert(node);
-	--node_num;
-}
-
-void Graph::insert_vertex(int node, string data, bool is_marked = false) {
-	node_table[node].first_vertex = make_shared<Vertex>(Vertex(data, is_marked, node_table[node].first_vertex));
-}
-void Graph::delete_vertex(int node, string _data) {
-	auto pre = make_shared<Vertex>();
-	auto p = node_table[node].first_vertex;
-	pre->first_vertex = p;
-	while (p && p->data != _data) {
-		pre = p;
-		p = p->first_vertex;
-	}
-	if (p) {
-		pre->first_vertex = p->first_vertex;
-	}
-}
-
-void Graph::show() {
-	for (const auto& [_, node] : node_table) {
-		cout << node.data << ":";
-		auto p = node.first_edge;
-		while (p) {
-			cout << p->adjVex << " ";
-			p = p->first_edge;
-		}
-		cout << endl;
-	}
-}
-
-void Graph::dfs(int start_node) {
-	if (tag[start_node] == UNVISITED) {
-		cout << node_table[start_node].data << " ";
-		tag[start_node] = VISITED;
-		auto p = node_table[start_node].first_edge;
-		while (p) {
-			dfs(p->adjVex);
-			p = p->first_edge;
-		}
-	}
-}
-
-void Graph::dfs() {
-	for (const auto& [i, _] : node_table) {
-		if (tag[i] == UNVISITED) {
-			dfs(i);
-		}
-		cout << endl;
-	}
-	for (auto& [i, _] : tag) {
-		tag[i] = UNVISITED;
-	}
-}
-
-void Graph::bfs(int start_node) {
-	if (tag[start_node] != VISITED) {
-		queue<int> q;
-		q.push(start_node);
-		tag[start_node] = VISITED;
-		cout << node_table[start_node].data << " ";
-		shared_ptr<Edge> p;
-		while (!q.empty()) {
-			int i = q.front();
-			q.pop();
-			p = node_table[i].first_edge;
-			while (p) {
-				if (tag[p->adjVex] == UNVISITED) {
-					tag[p->adjVex] = VISITED;
-					cout << node_table[p->adjVex].data;
-					q.push(p->adjVex);
+void delete_redex(Graph& host_graph, const Graph& redex) {
+	int mark = 0;
+	// add mark on edge
+	for (auto& host_edge : host_graph.edges) {
+		for (auto& redex_node : redex.nodes) {
+			if (host_edge.node1.first.id == redex_node.id) {
+				if (host_edge.id != 0) {
+					host_edge.id = -1;
 				}
-				p = p->first_edge;
+				else {
+					host_edge.mark.first = host_edge.node1.first.id;
+					host_edge.mark.second = host_edge.node1.second;
+					host_edge.node1.first.id = -1; // node1 should be removed
+				}
+			}
+			if (host_edge.node2.first.id == redex_node.id) {
+				if (host_edge.id != 0) {
+					host_edge.id = -1;
+				}
+				else {
+					host_edge.mark.first = host_edge.node2.first.id;
+					host_edge.mark.second = host_edge.node2.second;
+					host_edge.node2.first.id = -1; // node2 should be removed;
+				}
 			}
 		}
 	}
-}
-void Graph::bfs() {
-	for (const auto& [i, _] : node_table) {
-		if (tag[i] == UNVISITED) {
-			bfs(i);
-			cout << endl;
+	// delete edges (mark == -1)
+	for (auto p = host_graph.edges.begin(); p != host_graph.edges.end();) {
+		if (p->mark.first == -1) {
+			p = host_graph.edges.erase(p);
+		}
+		else {
+			++p;
 		}
 	}
-	for (const auto& [i, _] : tag) {
-		tag[i] = UNVISITED;
+	// delete nodes
+	unordered_set<int> ids;
+	for (const auto& node : redex.nodes) {
+		ids.insert(node.id);
 	}
- }
+	for (auto p = host_graph.nodes.begin(); p != host_graph.nodes.end();) {
+		if (ids.find(p->id) != ids.end()) {
+			p = host_graph.nodes.erase(p);
+		}
+		else {
+			++p;
+		}
+	}
+}
 
 
+void add_sub_graph(Graph& deleted_graph, const Graph& sub_graph) {
+	// add nodes
+	deleted_graph.nodes.emplace(sub_graph.nodes.begin(), sub_graph.nodes.end());
 
+	// hanlde 悬边
+	unordered_map<int, Node> nodes;
+	for (const auto& node : sub_graph.nodes) {
+		nodes[node.id] = node;
+	}
+	for (auto edge : deleted_graph.edges) {
+		if (edge.mark.first != 0) {
+			if (nodes.find(edge.mark.first) != nodes.end()) {
+				if (edge.node1.first.id == -1) {
+					edge.node1.first = nodes[edge.mark.first];
+					edge.node1.second = edge.mark.second;
+				}
+			}
+			else {
+				edge.mark = { -1, Vertex() };
+			}
+		}
+	}
+	// delete 悬边
+	for (auto p = deleted_graph.edges.begin(); p != deleted_graph.edges.end(); ++p) {
+		if (p->mark.first == -1) {
+			// need to be deleted
+			p = deleted_graph.edges.erase(p);
+		}
+		else {
+			p->mark.first = 0;
+			++p;
+		}
+	}
+	// add edges
+	deleted_graph.edges.emplace(sub_graph.edges.begin(), sub_graph.edges.end());
+}
 
+vector<Vertex> get_vertices(const vector<char>& labels, const vector<int>& marks) {
+	int n = labels.size();
+	vector<Vertex> vertices;
+	for (int i = 0; i < n; ++i) {
+		vertices.push_back(Vertex(labels[i], marks[i]));
+	}
+	return vertices;
+}
 
+vector<Node> get_nodes(const vector<int>& ids, const vector<bool>& flags, const vector<string>& labels, const vector<vector<Vertex>>& vertices) {
+	int n = labels.size();
+	vector<Node> nodes;
+	for (int i = 0; i < n; ++i) {
+		nodes.push_back(Node(ids[i], flags[i], labels[i], vertices[i]));
+	}
+	return nodes;
+}
+
+vector<Edge> get_edges(const vector<int>& ids, const vector<Node>& node1s, const vector<Vertex>& vertex1s, const vector<Node>& node2s, vector<Vertex>& vertex2s) {
+	int n = ids.size();
+	vector<Edge> edges;
+	for (int i = 0; i < n; ++i) {
+		edges.push_back(Edge(ids[i], { node1s[i], vertex1s[i] }, { node2s[i], vertex2s[i] }));
+	}
+	return edges;
+}
+
+vector<Edge> get_edges(const vector<int>& ids, const vector<pair<Node, Vertex>>& node1s, const vector<pair<Node, Vertex>>& node2s) {
+	int n = ids.size();
+	vector<Edge> edges;
+	for (int i = 0; i < n; ++i) {
+		edges.push_back(Edge(ids[i], node1s[i], node2s[i]));
+	}
+	return edges;
+}
+
+int main() {
+	vector<char> vertex_label1s = { 'T', 'D', 'R', 'R' };
+	vector<int> vertex_mark1s = { 1, 2, 3, 4 };
+	auto vertices1 = get_vertices(vertex_label1s, vertex_mark1s);
+
+	vector<char> vertex_label2s = { 'T', 'D', 'R', 'R' };
+	vector<int> vertex_mark2s = { 1, 2, 3, 4 };
+	auto vertices2 = get_vertices(vertex_label2s, vertex_mark2s);
+
+	vector<vector<Vertex>> verticeses;
+	verticeses.push_back(vertices1);
+	verticeses.push_back(vertices2);
+	vector<int> node_ids = { 1, 2 };
+	vector<bool> node_flags = { false, true };
+	vector<string> node_labels = { "send", "recieve" };
+	auto nodes = get_nodes(node_ids, node_flags, node_labels, verticeses);
+}

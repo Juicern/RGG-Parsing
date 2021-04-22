@@ -140,7 +140,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Graph-temp.cpp" />
     <ClCompile Include="RGG-Backend.cpp" />
   </ItemGroup>
   <ItemGroup>
