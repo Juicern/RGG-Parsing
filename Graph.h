@@ -2,6 +2,11 @@
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
+constexpr auto NOLABEL_CHAR = '-';
+constexpr auto NOLABEL_STR = "-";
+constexpr auto NOMARK = -1;
+constexpr auto NOID = -1;
+
 using namespace std;
 class Vertex;
 class Node;
@@ -20,13 +25,13 @@ vector<Edge> get_edges(const vector<int>&, const vector<pair<Node, const Vertex>
 class Vertex {
 public:
 	char label; // if key == '0' : superVertex, else : simple vertex 
-	int mark; // 0-> no marked 
+	int mark; // 0-> not marked 
 
-	Vertex() {}
+	Vertex() noexcept: label(NOLABEL_CHAR), mark(NOMARK){}
 	Vertex(const Vertex& _vertex) {
 		*this = _vertex;
 	}
-	Vertex(Vertex&& _vertex): label(_vertex.label), mark(_vertex.mark){}
+	Vertex(Vertex&& _vertex) noexcept : label(_vertex.label), mark(_vertex.mark){}
 	Vertex(char _label, int _mark) : label(_label), mark(_mark) {}
 
 	Vertex operator=(const Vertex& v) {
@@ -49,11 +54,11 @@ public:
 	string label;
 	vector<Vertex> vertices;
 
-	Node() {}
+	Node() noexcept : id(NOID), is_terminal(false), label(NOLABEL_STR){}
 	Node(const Node& _node){
 		*this = _node;
 	}
-	Node(Node&& _node): id(_node.id), is_terminal(_node.is_terminal), label(_node.label) {
+	Node(Node&& _node) noexcept : id(_node.id), is_terminal(_node.is_terminal), label(_node.label) {
 		vertices.assign(_node.vertices.begin(), _node.vertices.end());
 		_node.vertices.clear();
 	}
@@ -79,11 +84,11 @@ public:
 	pair<Node, Vertex> node1;
 	pair<Node, Vertex> node2;
 
-	Edge() {}
+	Edge() noexcept: id(NOID) {}
 	Edge(const Edge& _edge) {
 		*this = _edge;
 	}
-	Edge(Edge&& _edge): id(_edge.id) {
+	Edge(Edge&& _edge) noexcept : id(_edge.id) {
 		mark = make_pair(_edge.mark.first, _edge.mark.second);
 		node1 = make_pair(_edge.node1.first, _edge.node1.second);
 		node2 = make_pair(_edge.node2.first, _edge.node2.second);
@@ -115,7 +120,7 @@ public:
 	Graph(const Graph& _graph) {
 		*this = _graph;
 	}
-	Graph(Graph&& _graph) {
+	Graph(Graph&& _graph) noexcept {
 		nodes.assign(_graph.nodes.begin(), _graph.nodes.end());
 		edges.assign(_graph.edges.begin(), _graph.edges.end());
 		_graph.edges.clear();
@@ -135,6 +140,10 @@ class Production {
 public:
 	Graph l_graph;
 	Graph r_graph;
+	Production(Graph _l_graph, Graph _r_graph) {
+		l_graph = _l_graph;
+		r_graph = _r_graph;
+	}
 };
 // find the redex
 vector<Graph> find_redex(Graph& host_graph, Graph& sub_graph, vector<Production>& production) {
