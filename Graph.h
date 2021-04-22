@@ -2,6 +2,12 @@
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
+using namespace std;
+class Vertex;
+class Node;
+class Edge;
+class Graph;
+class Production;
 vector<Graph> find_redex(const Graph&, const Graph&, const vector<Production>&);
 vector<Graph> replace_redex(const Graph&, const vector<Graph>&, const Graph&);
 void delete_redex(Graph&, const Graph&);
@@ -11,26 +17,59 @@ vector<Node> get_nodes(const vector<int>&, const vector<bool>&, const vector<str
 vector<Edge> get_edges(const vector<int>&, const vector<Node>&, const vector<Vertex>&, const vector<Node>&, const vector<Vertex>&);
 vector<Edge> get_edges(const vector<int>&, const vector<pair<Node, const Vertex>>&, const vector<pair<Node, Vertex>>&);
 
-using namespace std;
-
 class Vertex {
 public:
 	char label; // if key == '0' : superVertex, else : simple vertex 
 	int mark; // 0-> no marked 
 
 	Vertex() {}
+	Vertex(const Vertex& _vertex) {
+		*this = _vertex;
+	}
+	Vertex(Vertex&& _vertex): label(_vertex.label), mark(_vertex.mark){}
 	Vertex(char _label, int _mark) : label(_label), mark(_mark) {}
+
+	Vertex operator=(const Vertex& v) {
+		Vertex vertex;
+		vertex.label = v.label;
+		vertex.mark = v.mark;
+		return vertex;
+	}
+
+	bool operator==(const Vertex& v)
+	{
+		return this->mark == v.mark;
+	}
 };
 
 class Node {
 public:
 	int id;
-	bool is_termimal;
+	bool is_terminal;
 	string label;
 	vector<Vertex> vertices;
 
 	Node() {}
-	Node(int _id, bool _is_terminal, string _label, vector<Vertex> _vertices) : id(_id), is_termimal(_is_terminal), label(_label), vertices(_vertices) {}
+	Node(const Node& _node){
+		*this = _node;
+	}
+	Node(Node&& _node): id(_node.id), is_terminal(_node.is_terminal), label(_node.label) {
+		vertices.assign(_node.vertices.begin(), _node.vertices.end());
+		_node.vertices.clear();
+	}
+	Node(int _id, bool _is_terminal, string _label, vector<Vertex> _vertices) : id(_id), is_terminal(_is_terminal), label(_label), vertices(_vertices) {}
+
+	Node operator=(const Node& n) {
+		Node node;
+		node.id = n.id;
+		node.is_terminal = n.is_terminal;
+		node.label = n.label;
+		node.vertices.assign(n.vertices.begin(), n.vertices.end());
+		return node;
+	}
+	bool operator==(const Node& n) {
+		return this->id == n.id;
+	}
 };
 
 class Edge {
@@ -41,7 +80,30 @@ public:
 	pair<Node, Vertex> node2;
 
 	Edge() {}
-	Edge(int _id, pair<Node, Vertex> _node1, pair<Node, Vertex> _node2) : id(_id), node1(_node1), node2(_node2) {}
+	Edge(const Edge& _edge) {
+		*this = _edge;
+	}
+	Edge(Edge&& _edge): id(_edge.id) {
+		mark = make_pair(_edge.mark.first, _edge.mark.second);
+		node1 = make_pair(_edge.node1.first, _edge.node1.second);
+		node2 = make_pair(_edge.node2.first, _edge.node2.second);
+	}
+	Edge(int _id, pair<Node, Vertex> _node1, pair<Node, Vertex> _node2) : id(_id) {
+		node1 = make_pair(_node1.first, _node1.second);
+		node2 = make_pair(_node2.first, _node2.second);
+	}
+
+	Edge operator=(const Edge& e) {
+		Edge edge;
+		edge.id = e.id;
+		edge.mark = e.mark;
+		edge.node1 = e.node1;
+		edge.node2 = e.node2;
+		return edge;
+	}
+	bool operator==(const Edge& e) {
+		return this->id == e.id;
+	}
 };
 
 class Graph {
@@ -50,7 +112,23 @@ public:
 	vector<Edge> edges;
 
 	Graph() {};
+	Graph(const Graph& _graph) {
+		*this = _graph;
+	}
+	Graph(Graph&& _graph) {
+		nodes.assign(_graph.nodes.begin(), _graph.nodes.end());
+		edges.assign(_graph.edges.begin(), _graph.edges.end());
+		_graph.edges.clear();
+		_graph.nodes.clear();
+	}
 	Graph(vector<Node> _nodes, vector<Edge> _edges) : nodes(_nodes), edges(_edges) {}
+
+	Graph operator=(const Graph& g){
+		Graph graph;
+		graph.nodes.assign(g.nodes.begin(), g.nodes.end());
+		graph.edges.assign(g.edges.begin(), g.edges.end());
+		return graph;
+	}
 };
 
 class Production {
@@ -59,7 +137,9 @@ public:
 	Graph r_graph;
 };
 // find the redex
-vector<Graph> find_redex(Graph& host_graph, Graph& sub_graph, vector<Production>& production);
+vector<Graph> find_redex(Graph& host_graph, Graph& sub_graph, vector<Production>& production) {
+	throw -1;
+}
 
 vector<Graph> replace_redex(const Graph& host_graph, const vector<Graph>& redexes, const Graph& sub_graph) {
 	vector<Graph> graphs;
@@ -126,7 +206,7 @@ void delete_redex(Graph& host_graph, const Graph& redex) {
 
 void add_sub_graph(Graph& deleted_graph, const Graph& sub_graph) {
 	// add nodes
-	deleted_graph.nodes.emplace(sub_graph.nodes.begin(), sub_graph.nodes.end());
+	deleted_graph.nodes.insert(deleted_graph.nodes.end(), sub_graph.nodes.begin(), sub_graph.nodes.end());
 
 	// hanlde Ðü±ß
 	unordered_map<int, Node> nodes;
@@ -142,7 +222,7 @@ void add_sub_graph(Graph& deleted_graph, const Graph& sub_graph) {
 				}
 			}
 			else {
-				edge.mark = { -1, Vertex() };
+				edge.mark = make_pair(-1, Vertex());
 			}
 		}
 	}
@@ -158,11 +238,11 @@ void add_sub_graph(Graph& deleted_graph, const Graph& sub_graph) {
 		}
 	}
 	// add edges
-	deleted_graph.edges.emplace(sub_graph.edges.begin(), sub_graph.edges.end());
+	deleted_graph.edges.insert(deleted_graph.edges.end(), sub_graph.edges.begin(), sub_graph.edges.end());
 }
 
 vector<Vertex> get_vertices(const vector<char>& labels, const vector<int>& marks) {
-	int n = labels.size();
+	auto n = labels.size();
 	vector<Vertex> vertices;
 	for (int i = 0; i < n; ++i) {
 		vertices.push_back(Vertex(labels[i], marks[i]));
@@ -171,7 +251,7 @@ vector<Vertex> get_vertices(const vector<char>& labels, const vector<int>& marks
 }
 
 vector<Node> get_nodes(const vector<int>& ids, const vector<bool>& flags, const vector<string>& labels, const vector<vector<Vertex>>& vertices) {
-	int n = labels.size();
+	auto n = labels.size();
 	vector<Node> nodes;
 	for (int i = 0; i < n; ++i) {
 		nodes.push_back(Node(ids[i], flags[i], labels[i], vertices[i]));
@@ -180,37 +260,20 @@ vector<Node> get_nodes(const vector<int>& ids, const vector<bool>& flags, const 
 }
 
 vector<Edge> get_edges(const vector<int>& ids, const vector<Node>& node1s, const vector<Vertex>& vertex1s, const vector<Node>& node2s, vector<Vertex>& vertex2s) {
-	int n = ids.size();
+	auto n = ids.size();
 	vector<Edge> edges;
 	for (int i = 0; i < n; ++i) {
-		edges.push_back(Edge(ids[i], { node1s[i], vertex1s[i] }, { node2s[i], vertex2s[i] }));
+		edges.push_back(Edge(ids[i], make_pair(node1s[i], vertex1s[i]), make_pair(node2s[i], vertex2s[i])));
 	}
 	return edges;
 }
 
 vector<Edge> get_edges(const vector<int>& ids, const vector<pair<Node, Vertex>>& node1s, const vector<pair<Node, Vertex>>& node2s) {
-	int n = ids.size();
+	auto n = ids.size();
 	vector<Edge> edges;
 	for (int i = 0; i < n; ++i) {
-		edges.push_back(Edge(ids[i], node1s[i], node2s[i]));
+		edges.push_back(Edge(ids[i], make_pair(node1s[i].first, node2s[i].second), make_pair(node2s[i].first, node2s[i].second)));
 	}
 	return edges;
 }
 
-int main() {
-	vector<char> vertex_label1s = { 'T', 'D', 'R', 'R' };
-	vector<int> vertex_mark1s = { 1, 2, 3, 4 };
-	auto vertices1 = get_vertices(vertex_label1s, vertex_mark1s);
-
-	vector<char> vertex_label2s = { 'T', 'D', 'R', 'R' };
-	vector<int> vertex_mark2s = { 1, 2, 3, 4 };
-	auto vertices2 = get_vertices(vertex_label2s, vertex_mark2s);
-
-	vector<vector<Vertex>> verticeses;
-	verticeses.push_back(vertices1);
-	verticeses.push_back(vertices2);
-	vector<int> node_ids = { 1, 2 };
-	vector<bool> node_flags = { false, true };
-	vector<string> node_labels = { "send", "recieve" };
-	auto nodes = get_nodes(node_ids, node_flags, node_labels, verticeses);
-}
