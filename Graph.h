@@ -28,18 +28,11 @@ public:
 	int mark; // 0-> not marked 
 
 	Vertex() noexcept: label(NOLABEL_CHAR), mark(NOMARK){}
-	Vertex(const Vertex& _vertex) {
-		*this = _vertex;
-	}
-	Vertex(Vertex&& _vertex) noexcept : label(_vertex.label), mark(_vertex.mark){}
-	Vertex(char _label, int _mark) : label(_label), mark(_mark) {}
+	Vertex(const char& _label, const int& _mark) : label(_label), mark(_mark) {}
+	Vertex(const Vertex& _vertex) : label(_vertex.label), mark(_vertex.mark) {}
+	// Vertex(Vertex&& _vertex) noexcept : label(_vertex.label), mark(_vertex.mark){}
 
-	Vertex operator=(const Vertex& v) {
-		Vertex vertex;
-		vertex.label = v.label;
-		vertex.mark = v.mark;
-		return vertex;
-	}
+
 
 	bool operator==(const Vertex& v)
 	{
@@ -55,23 +48,17 @@ public:
 	vector<Vertex> vertices;
 
 	Node() noexcept : id(NOID), is_terminal(false), label(NOLABEL_STR){}
-	Node(const Node& _node){
-		*this = _node;
+	Node(const int& _id, const bool& _is_terminal, const string& _label, const vector<Vertex>& _vertices) : id(_id), is_terminal(_is_terminal), label(_label) {
+		vertices.assign(_vertices.begin(), _vertices.end());
 	}
-	Node(Node&& _node) noexcept : id(_node.id), is_terminal(_node.is_terminal), label(_node.label) {
+	Node(const Node& _node) : id(_node.id), is_terminal(_node.is_terminal), label(_node.label) {
+		vertices.assign(_node.vertices.begin(), _node.vertices.end());
+	}
+	/*Node(Node&& _node) noexcept : id(_node.id), is_terminal(_node.is_terminal), label(_node.label) {
 		vertices.assign(_node.vertices.begin(), _node.vertices.end());
 		_node.vertices.clear();
-	}
-	Node(int _id, bool _is_terminal, string _label, vector<Vertex> _vertices) : id(_id), is_terminal(_is_terminal), label(_label), vertices(_vertices) {}
+	}*/
 
-	Node operator=(const Node& n) {
-		Node node;
-		node.id = n.id;
-		node.is_terminal = n.is_terminal;
-		node.label = n.label;
-		node.vertices.assign(n.vertices.begin(), n.vertices.end());
-		return node;
-	}
 	bool operator==(const Node& n) {
 		return this->id == n.id;
 	}
@@ -85,27 +72,27 @@ public:
 	pair<Node, Vertex> node2;
 
 	Edge() noexcept: id(NOID) {}
-	Edge(const Edge& _edge) {
-		*this = _edge;
+	Edge(const int& _id, const pair<Node, Vertex>& _node1, const pair<Node, Vertex>& _node2) : id(_id) {
+		mark = make_pair(0, Vertex());
+		node1.first = _node1.first;
+		node1.second = _node1.second;
+		node2.first = _node2.first;
+		node2.second = _node2.second;
 	}
-	Edge(Edge&& _edge) noexcept : id(_edge.id) {
+	Edge(const Edge& _edge) : id(_edge.id) {
+		mark.first = _edge.mark.first;
+		mark.second = _edge.mark.second;
+		node1.first = _edge.node1.first;
+		node1.second = _edge.node1.second;
+		node2.first = _edge.node2.first;
+		node2.second = _edge.node2.second;
+	}
+	/*Edge(Edge&& _edge) noexcept : id(_edge.id) {
 		mark = make_pair(_edge.mark.first, _edge.mark.second);
 		node1 = make_pair(_edge.node1.first, _edge.node1.second);
 		node2 = make_pair(_edge.node2.first, _edge.node2.second);
-	}
-	Edge(int _id, pair<Node, Vertex> _node1, pair<Node, Vertex> _node2) : id(_id) {
-		node1 = make_pair(_node1.first, _node1.second);
-		node2 = make_pair(_node2.first, _node2.second);
-	}
+	}*/
 
-	Edge operator=(const Edge& e) {
-		Edge edge;
-		edge.id = e.id;
-		edge.mark = e.mark;
-		edge.node1 = e.node1;
-		edge.node2 = e.node2;
-		return edge;
-	}
 	bool operator==(const Edge& e) {
 		return this->id == e.id;
 	}
@@ -116,34 +103,26 @@ public:
 	vector<Node> nodes;
 	vector<Edge> edges;
 
-	Graph() {};
+	Graph() = default;
 	Graph(const Graph& _graph) {
-		*this = _graph;
+		nodes.assign(_graph.nodes.begin(), _graph.nodes.end());
+		edges.assign(_graph.edges.begin(), _graph.edges.end());
 	}
-	Graph(Graph&& _graph) noexcept {
+	Graph(const vector<Node>& _nodes, const vector<Edge>& _edges) : nodes(_nodes), edges(_edges) {}
+	/*Graph(Graph&& _graph) noexcept {
 		nodes.assign(_graph.nodes.begin(), _graph.nodes.end());
 		edges.assign(_graph.edges.begin(), _graph.edges.end());
 		_graph.edges.clear();
 		_graph.nodes.clear();
-	}
-	Graph(vector<Node> _nodes, vector<Edge> _edges) : nodes(_nodes), edges(_edges) {}
-
-	Graph operator=(const Graph& g){
-		Graph graph;
-		graph.nodes.assign(g.nodes.begin(), g.nodes.end());
-		graph.edges.assign(g.edges.begin(), g.edges.end());
-		return graph;
-	}
+	}*/
 };
 
 class Production {
 public:
 	Graph l_graph;
 	Graph r_graph;
-	Production(Graph _l_graph, Graph _r_graph) {
-		l_graph = _l_graph;
-		r_graph = _r_graph;
-	}
+	Production() = default;
+	Production(const Graph& _l_graph, const Graph& _r_graph) : l_graph(_l_graph), r_graph(_r_graph) {}
 };
 // find the redex
 vector<Graph> find_redex(Graph& host_graph, Graph& sub_graph, vector<Production>& production) {
