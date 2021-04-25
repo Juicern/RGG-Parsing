@@ -1,18 +1,17 @@
 #include "pch.h"
 #include "CppUnitTest.h"
-#include "../RGG-Backend/Graph.h"
+#include "../RGG-Backend/Graph.cpp"
 
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
 
-namespace RGGTEST {
+namespace graph_test {
 	TEST_CLASS(test_for_vertex) {
 		TEST_METHOD(test_for_default_constructor) {
 			auto v = make_shared<Vertex>();
 			Assert::IsNotNull(v.get());
 		}
-
 		TEST_METHOD(test_for_2nd_constructor) {
 			auto v = make_shared<Vertex>('T', 2);
 			Assert::AreEqual(v->label, 'T');
@@ -27,7 +26,7 @@ namespace RGGTEST {
 		}
 		TEST_METHOD(test_for_operator_equals) {
 			Vertex v1('T', 2);
-			Vertex v2('D', 2);
+			Vertex v2('T', 3);
 			Assert::IsTrue(v1 == v2);
 		}
 	};
@@ -96,6 +95,28 @@ namespace RGGTEST {
 			Assert::IsTrue(e.node2.first == n2);
 			Assert::IsTrue(e.node2.second == v4);
 		}
+		TEST_METHOD(test_for_copy_constructor) {
+			Vertex v1('R', 1);
+			Vertex v2('T', 2);
+			vector<Vertex> vs1{ v1, v2 };
+			Node n1(1, false, "send", vs1);
+
+			Vertex v3('A', 4);
+			Vertex v4('Y', 5);
+			vector<Vertex> vs2{ v3, v4 };
+			Node n2(2, true, "receive", vs2);
+			pair<Node, Vertex> p1(n1, v2);
+			pair<Node, Vertex> p2(n2, v4);
+			auto e1 = make_shared<Edge>(1, p1, p2);
+			auto e2 = make_shared<Edge>(*e1);
+
+			Assert::AreEqual(e1->id, 1);
+			Assert::IsTrue(e1->node1.first == e2->node1.first);
+			Assert::IsTrue(e1->node1.second == e2->node1.second);
+			Assert::IsTrue(e1->node2.first == e2->node2.first);
+			Assert::IsTrue(e1->node2.second == e2->node2.second);
+			Assert::IsFalse(e1 == e2);
+		}
 		TEST_METHOD(test_for_operator_equals) {
 			Vertex v1('R', 1);
 			Vertex v2('T', 2);
@@ -158,17 +179,18 @@ namespace RGGTEST {
 
 			vector<Node> ns{ n1, n2 };
 			vector<Edge> es{ e1, e2 };
-			Graph g1(ns, es);
-			Graph g2(g1);
+			auto g1 = make_shared<Graph>(ns, es);
+			auto g2 = make_shared<Graph>(*g1);
 
-			Assert::AreEqual(g1.edges.size(), g2.edges.size());
-			Assert::AreEqual(g1.nodes.size(), g2.nodes.size());
-			for (auto i = 0; i < g1.edges.size(); ++i) {
-				Assert::IsTrue(g1.edges[i] == g2.edges[i]);
+			Assert::AreEqual(g1->edges.size(), g2->edges.size());
+			Assert::AreEqual(g1->nodes.size(), g2->nodes.size());
+			for (auto i = 0; i < g1->edges.size(); ++i) {
+				Assert::IsTrue(g1->edges[i] == g2->edges[i]);
 			}
-			for (auto i = 0; i < g1.nodes.size(); ++i) {
-				Assert::IsTrue(g1.nodes[i] == g2.nodes[i]);
+			for (auto i = 0; i < g1->nodes.size(); ++i) {
+				Assert::IsTrue(g1->nodes[i] == g2->nodes[i]);
 			}
+			Assert::IsFalse(g1 == g2);
 		}
 	};
 	TEST_CLASS(test_for_production) {
@@ -227,8 +249,269 @@ namespace RGGTEST {
 			}
 			for (auto i = 0; i < p.r_graph.nodes.size(); ++i) {
 				Assert::IsTrue(p.l_graph.nodes[i] == g1.nodes[i]);
-			}
+			}	
+		}
+	};
+	TEST_CLASS(test_for_find_redex) {
+		
+	};
+	TEST_CLASS(test_for_delete_redex) {
+		TEST_METHOD(test_for_no_dangle_edge) {
+			Vertex v1('R', 1);
+			Vertex v2('T', 2);
+			vector<Vertex> vs1{ v1, v2 };
+			Node n1(1, false, "send", vs1);
+
+			Vertex v3('A', 4);
+			Vertex v4('Y', 5);
+			vector<Vertex> vs2{ v3, v4 };
+			Node n2(2, true, "receive", vs2);
+
+			//isolated node
+			Node n3(8, true, "state", {});
+
+			Edge e1(1, { n1, v1 }, { n2, v4 });
+			Edge e2(6, { n1, v2 }, { n2, v3 });
+
+			vector<Node> ns1{ n1, n2, n3 };
+			vector<Edge> es1{ e1, e2 };
+
+			Graph host_g(ns1, es1);
+			Graph redex({ n3 }, {});
+
+			delete_redex(host_g, redex);
+
+			Assert::IsTrue(host_g.edges.size() == 2);
+			Assert::IsTrue(host_g.nodes.size() == 2);
+			Assert::IsTrue(host_g.nodes[0] == n1);
+			Assert::IsTrue(host_g.nodes[1] == n2);
+			Assert::IsTrue(host_g.edges[0] == e1);
+			Assert::IsTrue(host_g.edges[1] == e2);
+		}
+		TEST_METHOD(test_for_dangle_edge) {
+			Vertex v1('R', 1);
+			Vertex v2('T', 2);
+			vector<Vertex> vs1{ v1, v2 };
+			Node n1(1, false, "send", vs1);
+
+			Vertex v3('A', 4);
+			Vertex v4('Y', 5);
+			vector<Vertex> vs2{ v3, v4 };
+			Node n2(2, true, "receive", vs2);
+
+			Vertex v5('C', 7);
+			Vertex v6('D', 8);
+			vector<Vertex> vs3{ v5, v6 };
+			Node n3(8, true, "state", vs3);
+
+			Edge e1(1, { n1, v1 }, { n2, v4 });
+			Edge e2(6, { n1, v2 }, { n2, v3 });
+			Edge e3(4, { n1, v1 }, { n3, v5 });
+			vector<Node> ns1{ n1, n2, n3 };
+			vector<Edge> es1{ e1, e2, e3 };
+
+			Graph host_g(ns1, es1);
+			Graph redex({ n3 }, {});
+
+			delete_redex(host_g, redex);
+
+			Assert::IsTrue(host_g.edges.size() == 3);
+			Assert::IsTrue(host_g.nodes.size() == 2);
+			Assert::IsTrue(host_g.nodes[0] == n1);
+			Assert::IsTrue(host_g.nodes[1] == n2);
+			Assert::IsTrue(host_g.edges[0] == e1);
+			Assert::IsTrue(host_g.edges[1] == e2);
+			Assert::IsTrue(host_g.edges[2] == e3);
+			Assert::IsTrue(host_g.edges[2].mark.first == n3.id);
+			Assert::IsTrue(host_g.edges[2].mark.second == v5);
+		}
+		TEST_METHOD(test_for_deleted_edge_with_no_nodes) {
+			Vertex v1('R', 1);
+			Vertex v2('T', 2);
+			vector<Vertex> vs1{ v1, v2 };
+			Node n1(1, false, "send", vs1);
+
+			Vertex v3('A', 4);
+			Vertex v4('Y', 5);
+			vector<Vertex> vs2{ v3, v4 };
+			Node n2(2, true, "receive", vs2);
+
+			Vertex v5('C', 7);
+			Vertex v6('D', 8);
+			vector<Vertex> vs3{ v5, v6 };
+			Node n3(8, true, "state", vs3);
+
+			Edge e1(1, { n1, v1 }, { n2, v4 });
+			Edge e2(6, { n1, v2 }, { n2, v3 });
+			Edge e3(4, { n1, v1 }, { n3, v5 });
+			vector<Node> ns1{ n1, n2, n3 };
+			vector<Edge> es1{ e1, e2, e3 };
+
+			Graph host_g(ns1, es1);
+			Graph redex({ n3, n1 }, {});
+
+			delete_redex(host_g, redex);
+
+			Assert::IsTrue(host_g.edges.size() == 2);
+			Assert::IsTrue(host_g.nodes.size() == 1);
+
+			Assert::IsTrue(host_g.edges[0] == e1);
+			Assert::IsTrue(host_g.edges[1] == e2);
+			Assert::IsTrue(host_g.edges[0].node1.first.id == -1);
+			Assert::IsTrue(host_g.edges[1].node1.first.id == -1);
+
+			Assert::IsTrue(host_g.nodes[0] == n2);
+		}
+		TEST_METHOD(test_for_deleted_edge_in_redex) {
+			Vertex v1('R', 1);
+			Vertex v2('T', 2);
+			vector<Vertex> vs1{ v1, v2 };
+			Node n1(1, false, "send", vs1);
+
+			Vertex v3('A', 4);
+			Vertex v4('Y', 5);
+			vector<Vertex> vs2{ v3, v4 };
+			Node n2(2, true, "receive", vs2);
+
+			Vertex v5('C', 7);
+			Vertex v6('D', 8);
+			vector<Vertex> vs3{ v5, v6 };
+			Node n3(8, true, "state", vs3);
+
+			Edge e1(1, { n1, v1 }, { n2, v4 });
+			Edge e2(6, { n1, v2 }, { n2, v3 });
+			Edge e3(4, { n1, v1 }, { n3, v5 });
+			vector<Node> ns1{ n1, n2, n3 };
+			vector<Edge> es1{ e1, e2, e3 };
+
+			Graph host_g(ns1, es1);
+			Graph redex({ n3, n1 }, {e2});
+
+			delete_redex(host_g, redex);
+
+			Assert::IsTrue(host_g.edges.size() == 1);
+			Assert::IsTrue(host_g.nodes.size() == 1);
+
+			Assert::IsTrue(host_g.edges[0] == e1);
+			Assert::IsTrue(host_g.edges[0].node1.first.id == -1);
+
+			Assert::IsTrue(host_g.nodes[0] == n2);
+		}
+	};
+	TEST_CLASS(test_for_add_sub_graph) {
+		TEST_METHOD(test_for_no_dangle_edge) {
+			Vertex v1('R', 1);
+			Vertex v2('T', 2);
+			vector<Vertex> vs1{ v1, v2 };
+			Node n1(1, false, "send", vs1);
+
+			Vertex v3('A', 4);
+			Vertex v4('Y', 5);
+			vector<Vertex> vs2{ v3, v4 };
+			Node n2(2, true, "receive", vs2);
+
+			//isolated node
+			Node n3(8, true, "state", {});
+
+			Edge e1(1, { n1, v1 }, { n2, v4 });
+			Edge e2(6, { n1, v2 }, { n2, v3 });
+
+			vector<Node> ns1{ n1, n2 };
+			vector<Edge> es1{ e1, e2 };
+
+			Graph host_g(ns1, es1);
+			Graph sub_g({ n3 }, {});
+
+			add_sub_graph(host_g, sub_g);
+
+			Assert::IsTrue(host_g.edges.size() == 2);
+			Assert::IsTrue(host_g.nodes.size() == 3);
+			Assert::IsTrue(host_g.edges[0] == e1);
+			Assert::IsTrue(host_g.edges[1] == e2);
+			Assert::IsTrue(host_g.nodes[0] == n1);
+			Assert::IsTrue(host_g.nodes[1] == n2);
+			Assert::IsTrue(host_g.nodes[2] == n3);
+		}
+		TEST_METHOD(test_for_dangle_edge_need_to_be_removed) {
+			Vertex v1('R', 1);
+			Vertex v2('T', 2);
+			vector<Vertex> vs1{ v1, v2 };
+			Node n1(1, false, "send", vs1);
+
+			Vertex v3('A', 4);
+			Vertex v4('Y', 5);
+			vector<Vertex> vs2{ v3, v4 };
+			Node n2(2, true, "receive", vs2);
+
+			//isolated node
+			Node n3(8, true, "state", {});
+
+			Edge e1(1, { n1, v1 }, { n2, v4 });
+			Edge e2(6, { n1, v2 }, { n2, v3 });
+			Edge e3(3, { n1, v2 }, { n3, {} });
+
+			vector<Node> ns1{ n1, n2 };
+			vector<Edge> es1{ e1, e2, e3 };
+
+			Graph host_g(ns1, es1);
+			// make host_g.edges[2] be a dangle edge
+			host_g.edges[2].mark.first = 8;
+			host_g.edges[2].node2.first.id = -1;
+			Graph sub_g({}, {});
 			
+			add_sub_graph(host_g, sub_g);
+
+			Assert::IsTrue(host_g.edges.size() == 2);
+			Assert::IsTrue(host_g.nodes.size() == 2);
+			Assert::IsTrue(host_g.edges[0] == e1);
+			Assert::IsTrue(host_g.edges[1] == e2);
+			Assert::IsTrue(host_g.nodes[0] == n1);
+			Assert::IsTrue(host_g.nodes[1] == n2);
+		}
+		TEST_METHOD(test_for_dangle_edge_need_to_be_connected) {
+			Vertex v1('R', 1);
+			Vertex v2('T', 2);
+			vector<Vertex> vs1{ v1, v2 };
+			Node n1(1, false, "send", vs1);
+
+			Vertex v3('A', 4);
+			Vertex v4('Y', 5);
+			vector<Vertex> vs2{ v3, v4 };
+			Node n2(2, true, "receive", vs2);
+
+			//isolated node
+			Node n3(8, true, "state", {});
+
+			Edge e1(1, { n1, v1 }, { n2, v4 });
+			Edge e2(6, { n1, v2 }, { n2, v3 });
+			Edge e3(3, { n1, v2 }, { n3, {} });
+
+			vector<Node> ns1{ n1, n2 };
+			vector<Edge> es1{ e1, e2, e3 };
+
+			Graph host_g(ns1, es1);
+			// make host_g.edges[2] be a dangle edge
+			host_g.edges[2].mark.first = 8;
+			host_g.edges[2].node2.first.id = -1;
+			Graph sub_g({n3}, {});
+
+			add_sub_graph(host_g, sub_g);
+
+			Assert::IsTrue(host_g.edges.size() == 3);
+			Assert::IsTrue(host_g.nodes.size() == 3);
+			Assert::IsTrue(host_g.edges[0] == e1);
+			Assert::IsTrue(host_g.edges[1] == e2);
+			Assert::IsTrue(host_g.edges[2] == e3);
+			Assert::IsTrue(host_g.nodes[0] == n1);
+			Assert::IsTrue(host_g.nodes[1] == n2);
+			Assert::IsTrue(host_g.nodes[2] == n3);
+			Assert::IsTrue(host_g.edges[2].node2.first.id == 8);
+			Assert::IsTrue(host_g.edges[2].mark.first == 0);
+		}
+	};
+	TEST_CLASS(test_for_replace_redex) {
+		TEST_METHOD(test_for_simple_case) {
+
 		}
 	};
 }
