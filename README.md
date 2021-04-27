@@ -38,7 +38,7 @@ The main algorithms of this project are listed below:
 
 ## 27 April 2021 Update
 
-The process is on the below:
+The process is in the below:
 
 1. Complete the data structures
 2. Complete the graph-replacement algorithm
