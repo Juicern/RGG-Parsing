@@ -1,5 +1,5 @@
-# RGG-Backend(Undone)
-This is the backend code of RGG(Reserved Graph Grammar), written in C++, which mainly includes data structures and parsing algorithms. 
+# RGG Parsing
+This is the backend code of RGG Parsing(Reserved Graph Grammar), written in C++, which mainly includes data structures, parsing algorithms and test. 
 
 The frontend part will be written after completing this project, with C# and running on Windows platform probably.
 
