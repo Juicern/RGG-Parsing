@@ -11,25 +11,35 @@ Context-free graph grammar, as we all know, has productions in which every left-
 
 RGG is the most popular context-sensitive graph grammar, which facilitates the complexity of LGG(Layered graph grammar) by adding some mechanisms.
 
-This project is divided into 2 parts:
+This project is divided into 3 parts:
 
 * Data Structures
 * Parsing algorithms
+* Test
 
 ## Data Structures
 
 The main data structure of this project is currently the following:
 
-* Graph
+* Vertex
 * Node
-* Edge(maybe belongs to Node)
+* Edge
+* Graph
 * Production
 
 ## Parsing Algorithms
 
 The main algorithms of this project are listed below:
 
-* How to find the isomorphic graph of a given graph?
-* How to find all redexes of a host graph？
-* How to pick the production to replace the redex?(Maybe set an order)
-* How to replace the redex?(fix the embedding problem)
+* How to find the isomorphic graph of a given graph? (I will refer to my partner about this section)
+* How to find all redexes of a host graph？(same as above)
+* How to pick the production to replace the redex? (Maybe set an order)
+* How to replace the redex? (Solved)
+
+## 27 April 2021 Update
+
+The process is on the below:
+
+1. Complete the data structures
+2. Complete the graph-replacement algorithm
+3. Write test for the above and fix all the bugs
