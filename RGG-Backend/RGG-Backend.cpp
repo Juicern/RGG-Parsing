@@ -1,19 +1,26 @@
 ﻿#include <iostream>
 #include "Graph.h"
 int main() {
-	//vector<char> vertex_label1s = { 'T', 'D', 'R', 'R' };
-	//vector<int> vertex_mark1s = { 1, 2, 3, 4 };
-	//auto vertices1 = get_vertices(vertex_label1s, vertex_mark1s);
+	Vertex v1('R', 1);
+	Vertex v2('T', 2);
+	vector<Vertex> vs1{ v1, v2 };
+	Node n1(1, false, "send", vs1);
 
-	//vector<char> vertex_label2s = { 'T', 'D', 'R', 'R' };
-	//vector<int> vertex_mark2s = { 1, 2, 3, 4 };
-	//auto vertices2 = get_vertices(vertex_label2s, vertex_mark2s);
+	Vertex v3('A', 4);
+	Vertex v4('Y', 5);
+	vector<Vertex> vs2{ v3, v4 };
+	Node n2(2, true, "receive", vs2);
+	
+	Node n3(4, false, "if", {});
 
-	//vector<vector<Vertex>> verticeses;
-	//verticeses.push_back(vertices1);
-	//verticeses.push_back(vertices2);
-	//vector<int> node_ids = { 1, 2 };
-	//vector<bool> node_flags = { false, true };
-	//vector<string> node_labels = { "send", "recieve" };
-	//auto nodes = get_nodes(node_ids, node_flags, node_labels, verticeses);
+	Edge e1(1, { n1, v1 }, { n2, v4 });
+	Edge e2(1, { n1, v2 }, { n2, v3 });
+
+	vector<Node> ns{ n1, n2, n3};
+	vector<Edge> es{ e1, e2 };
+	Graph g(ns, es);
+
+	vector<Graph> gs{ g };
+	draw_process_in_html(gs);
+	show_process();
 }

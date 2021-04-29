@@ -74,4 +74,6 @@ vector<Vertex> get_vertices(const vector<char>&, const vector<int>&);
 vector<Node> get_nodes(const vector<int>&, const vector<bool>&, const vector<string>&, const vector<vector<Vertex>>&);
 vector<Edge> get_edges(const vector<int>&, const vector<Node>&, const vector<Vertex>&, const vector<Node>&, const vector<Vertex>&);
 vector<Edge> get_edges(const vector<int>&, const vector<pair<Node, const Vertex>>&, const vector<pair<Node, Vertex>>&);
-
+void show_process();
+void draw_process_in_html(const vector<Graph>&);
+string draw_graph_in_div(const Graph&);

@@ -1,0 +1,2 @@
+mermaid-filter.cmd
+pandoc -f markdown -t mermaid-filter -o result.html src.md
