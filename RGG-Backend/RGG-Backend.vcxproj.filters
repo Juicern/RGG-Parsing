@@ -21,9 +21,15 @@
     <ClCompile Include="Graph.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="show_graph.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graph.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="show_graph.h">
       <Filter>header</Filter>
     </ClInclude>
   </ItemGroup>

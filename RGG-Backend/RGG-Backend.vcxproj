@@ -142,9 +142,11 @@
   <ItemGroup>
     <ClCompile Include="Graph.cpp" />
     <ClCompile Include="RGG-Backend.cpp" />
+    <ClCompile Include="show_graph.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graph.h" />
+    <ClInclude Include="show_graph.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,5 @@
 ﻿#include <iostream>
-#include "Graph.h"
+#include "show_graph.h"
 int main() {
 	Vertex v1('R', 1);
 	Vertex v2('T', 2);
