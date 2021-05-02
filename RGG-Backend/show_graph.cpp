@@ -3,8 +3,8 @@
 void show_process() {
 	system("start process.html");
 }
-void draw_process_in_html(const vector<Graph>& graphs) {
-	ofstream file("process.html", ios::out);
+void draw_process_in_html(const std::vector<Graph>& graphs) {
+	std::ofstream file("process.html", std::ios::out);
 	file << "<!doctype html>\n";
 	file << "<html>\n";
 	file << "<head>\n";
@@ -20,28 +20,25 @@ void draw_process_in_html(const vector<Graph>& graphs) {
 	file << "</html>\n";
 	file.close();
 }
-string draw_graph_in_div(const Graph& graph) {
-	string div;
+std::string draw_graph_in_div(const Graph& graph) {
+	std::string div;
 	div += "<div class = \"mermaid\">\n";
 	div += "graph TD\n";
-	unordered_map<int, Node> nodes;
-	for (const auto& node : graph.nodes) {
-		nodes[node.id] = node;
-	}
+	std::unordered_set<Node, node_hash> nodes(graph.nodes.begin(), graph.nodes.end());
 	for (const auto& edge : graph.edges) {
-		if (nodes.find(edge.node1.first.id) != nodes.end()) {
-			nodes.erase(edge.node1.first.id);
+		if (nodes.count(edge.node1.first)) {
+			nodes.erase(edge.node1.first);
 		}
-		if (nodes.find(edge.node2.first.id) != nodes.end()) {
-			nodes.erase(edge.node2.first.id);
+		if (nodes.count(edge.node2.first)) {
+			nodes.erase(edge.node2.first);
 		}
-		div += to_string(edge.node1.first.id) + "[" + edge.node1.first.label + "]";
+		div += std::to_string(edge.node1.first.id) + "[" + edge.node1.first.label + "]";
 		div += " --- ";
-		div += to_string(edge.node2.first.id) + "[" + edge.node2.first.label + "]";
+		div += std::to_string(edge.node2.first.id) + "[" + edge.node2.first.label + "]";
 		div += "\n";
 	}
-	for (const auto& [_, node] : nodes) {
-		div += to_string(node.id) + "[" + node.label + "]";
+	for (const auto& node : nodes) {
+		div += std::to_string(node.id) + "[" + node.label + "]";
 		div += "\n";
 	}
 	div += "</div>\n";
