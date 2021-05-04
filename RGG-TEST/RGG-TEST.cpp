@@ -322,8 +322,7 @@ namespace graph_test {
 			Assert::IsTrue(host_g.edges[0] == e1);
 			Assert::IsTrue(host_g.edges[1] == e2);
 			Assert::IsTrue(host_g.edges[2] == e3);
-			Assert::IsTrue(host_g.edges[2].mark.first == n3.id);
-			Assert::IsTrue(host_g.edges[2].mark.second == v5);
+			Assert::IsTrue(host_g.edges[2].mark == v5.mark);
 		}
 		TEST_METHOD(test_for_deleted_edge_with_no_nodes) {
 			Vertex v1('R', 1);
@@ -422,7 +421,7 @@ namespace graph_test {
 			Graph host_g(ns1, es1);
 			Graph sub_g({ n3 }, {});
 
-			add_sub_graph(host_g, sub_g);
+			add_subgraph(host_g, sub_g);
 
 			Assert::IsTrue(host_g.edges.size() == 2);
 			Assert::IsTrue(host_g.nodes.size() == 3);
@@ -455,11 +454,10 @@ namespace graph_test {
 
 			Graph host_g(ns1, es1);
 			// make host_g.edges[2] be a dangle edge
-			host_g.edges[2].mark.first = 8;
-			host_g.edges[2].node2.first.id = -1;
+			host_g.edges[2].mark = 8;
 			Graph sub_g({}, {});
 			
-			add_sub_graph(host_g, sub_g);
+			add_subgraph(host_g, sub_g);
 
 			Assert::IsTrue(host_g.edges.size() == 2);
 			Assert::IsTrue(host_g.nodes.size() == 2);
@@ -480,7 +478,8 @@ namespace graph_test {
 			Node n2(2, true, "receive", vs2);
 
 			//isolated node
-			Node n3(8, true, "state", {});
+			Vertex v5('A', 7);
+			Node n3(8, true, "state", {v5});
 
 			Edge e1(1, { n1, v1 }, { n2, v4 });
 			Edge e2(6, { n1, v2 }, { n2, v3 });
@@ -491,11 +490,10 @@ namespace graph_test {
 
 			Graph host_g(ns1, es1);
 			// make host_g.edges[2] be a dangle edge
-			host_g.edges[2].mark.first = 8;
-			host_g.edges[2].node2.first.id = -1;
+			host_g.edges[2].mark = 7;
 			Graph sub_g({n3}, {});
 
-			add_sub_graph(host_g, sub_g);
+			add_subgraph(host_g, sub_g);
 
 			Assert::IsTrue(host_g.edges.size() == 3);
 			Assert::IsTrue(host_g.nodes.size() == 3);
@@ -506,7 +504,7 @@ namespace graph_test {
 			Assert::IsTrue(host_g.nodes[1] == n2);
 			Assert::IsTrue(host_g.nodes[2] == n3);
 			Assert::IsTrue(host_g.edges[2].node2.first.id == 8);
-			Assert::IsTrue(host_g.edges[2].mark.first == 0);
+			Assert::IsTrue(host_g.edges[2].mark == 0);
 		}
 	};
 	TEST_CLASS(test_for_replace_redex) {
