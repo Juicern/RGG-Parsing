@@ -3,12 +3,11 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <fstream>
+#include <algorithm>
 constexpr auto NOLABEL_CHAR = '-';
 constexpr auto NOLABEL_STR = "-";
 constexpr auto NOMARK = -1;
 constexpr auto NOID = -1;
-
-using namespace std;
 
 class Vertex {
 public:
@@ -18,43 +17,45 @@ public:
 	bool operator==(const Vertex&);
 public:
 	char label; // if label == '0' : superVertex, else : simple vertex 
-	int mark; // 0 -> not marked 
+	int mark; // 0 -> not marked, The marks of the vertices in a node are not the same
 };
+
 
 class Node {
 public:
 	Node() noexcept;
-	Node(const int&, const bool&, const string&, const vector<Vertex>&);
+	Node(const int&, const bool&, const std::string&, const std::vector<Vertex>&);
 	Node(const Node&);
 	bool operator==(const Node&);
 public:
 	int id;
 	bool is_terminal;
-	string label;
-	vector<Vertex> vertices;
+	std::string label;
+	std::vector<Vertex> vertices;
 };
+
 
 class Edge {
 public:
 	Edge() noexcept;
-	Edge(const int&, const pair<Node, Vertex>&, const pair<Node, Vertex>&);
+	Edge(const int&, const std::pair<Node, Vertex>&, const std::pair<Node, Vertex>&);
 	Edge(const Edge&);
 	bool operator==(const Edge&);
 public:
 	int id;
-	pair<int, Vertex> mark; // 不需要删除：0， 悬边：连接的被删结点的id， 需要被删的边： -1
-	pair<Node, Vertex> node1;
-	pair<Node, Vertex> node2;
+	int mark; // 不需要删除：0， 悬边：连接的被删顶点的id， 需要被删的边： -1
+	std::pair<Node, Vertex> node1;
+	std::pair<Node, Vertex> node2;
 };
 
 class Graph {
 public:
 	Graph() = default;
 	Graph(const Graph&);
-	Graph(const vector<Node>&, const vector<Edge>&);
+	Graph(const std::vector<Node>&, const std::vector<Edge>&);
 public:
-	vector<Node> nodes;
-	vector<Edge> edges;
+	std::vector<Node> nodes;
+	std::vector<Edge> edges;
 };
 
 class Production {
@@ -65,14 +66,18 @@ public:
 	Graph l_graph;
 	Graph r_graph;
 };
-
-vector<Graph> find_redex(const Graph&, const Graph&, const vector<Production>&);
-void delete_redex(Graph&, const Graph&);
-void add_sub_graph(Graph&, const Graph&);
-vector<Graph> replace_redex(const Graph&, const vector<Graph>&, const Graph&);
+std::vector<Graph> find_redex(const Graph&, const Graph&, const std::vector<Production>&);
+std::vector<Graph> replace_redex(const Graph&, const std::vector<Graph>&, const Graph&);
 Graph replace_redex(const Graph&, const Graph&, const Graph&);
-vector<Vertex> get_vertices(const vector<char>&, const vector<int>&);
-vector<Node> get_nodes(const vector<int>&, const vector<bool>&, const vector<string>&, const vector<vector<Vertex>>&);
-vector<Edge> get_edges(const vector<int>&, const vector<Node>&, const vector<Vertex>&, const vector<Node>&, const vector<Vertex>&);
-vector<Edge> get_edges(const vector<int>&, const vector<pair<Node, const Vertex>>&, const vector<pair<Node, Vertex>>&);
-
+void delete_redex(Graph&, const Graph&);
+void delete_redex_edges(Graph&, const Graph&);
+void delete_redex_nodes(Graph&, const Graph&);
+void add_mark_on_edge(Graph&, const Graph&);
+void add_subgraph(Graph&, const Graph&);
+void connect_nodes_on_dangle_edges(Graph&, const Graph&);
+inline void add_subgraph_nodes(Graph&, const Graph&);
+inline void add_subgraph_edges(Graph&, const Graph&);
+void remove_vertex_on_edges_and_nodes(Graph&);
+void reset_id_on_edges_and_nodes(Graph&);
+inline std::string get_host_graph_path();
+inline std::string get_production_path();

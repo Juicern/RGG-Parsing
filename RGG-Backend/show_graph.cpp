@@ -24,21 +24,24 @@ std::string draw_graph_in_div(const Graph& graph) {
 	std::string div;
 	div += "<div class = \"mermaid\">\n";
 	div += "graph TD\n";
-	std::unordered_set<Node, node_hash> nodes(graph.nodes.begin(), graph.nodes.end());
+	std::unordered_map<int, Node> isolated_nodes;
+	for (const auto& node : graph.nodes) {
+		isolated_nodes[node.id] = node;
+	}
 	for (const auto& edge : graph.edges) {
-		if (nodes.count(edge.node1.first)) {
-			nodes.erase(edge.node1.first);
+		if (isolated_nodes.count(edge.node1.first.id)) {
+			isolated_nodes.erase(edge.node1.first.id);
 		}
-		if (nodes.count(edge.node2.first)) {
-			nodes.erase(edge.node2.first);
+		if (isolated_nodes.count(edge.node2.first.id)) {
+			isolated_nodes.erase(edge.node2.first.id);
 		}
 		div += std::to_string(edge.node1.first.id) + "[" + edge.node1.first.label + "]";
 		div += " --- ";
 		div += std::to_string(edge.node2.first.id) + "[" + edge.node2.first.label + "]";
 		div += "\n";
 	}
-	for (const auto& node : nodes) {
-		div += std::to_string(node.id) + "[" + node.label + "]";
+	for (const auto& [id, node] : isolated_nodes) {
+		div += std::to_string(id) + "[" + node.label + "]";
 		div += "\n";
 	}
 	div += "</div>\n";
