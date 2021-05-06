@@ -1,9 +1,12 @@
+#pragma once
 #include <vector>
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
 #include <fstream>
 #include <algorithm>
+#include <regex>
+#include <iterator>
 constexpr auto NOLABEL_CHAR = '-';
 constexpr auto NOLABEL_STR = "-";
 constexpr auto NOMARK = -1;
@@ -16,7 +19,7 @@ public:
 	Vertex(const Vertex&);
 	bool operator==(const Vertex&);
 public:
-	char label; // if label == '0' : superVertex, else : simple vertex 
+	char label; // if label == '-' : superVertex, else : simple vertex 
 	int mark; // 0 -> not marked, The marks of the vertices in a node are not the same
 };
 
@@ -79,5 +82,3 @@ inline void add_subgraph_nodes(Graph&, const Graph&);
 inline void add_subgraph_edges(Graph&, const Graph&);
 void remove_vertex_on_edges_and_nodes(Graph&);
 void reset_id_on_edges_and_nodes(Graph&);
-inline std::string get_host_graph_path();
-inline std::string get_production_path();

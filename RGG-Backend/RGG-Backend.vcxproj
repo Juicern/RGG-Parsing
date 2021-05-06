@@ -141,6 +141,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Graph.cpp" />
+    <ClCompile Include="read_graph.cpp" />
+    <ClCompile Include="read_graph.h" />
     <ClCompile Include="RGG-Backend.cpp" />
     <ClCompile Include="show_graph.cpp" />
   </ItemGroup>

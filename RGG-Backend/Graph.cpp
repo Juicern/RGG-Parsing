@@ -102,7 +102,11 @@ void delete_redex_nodes(Graph& host_graph, const Graph& redex) {
 
 void add_mark_on_edge(Graph& host_graph, const Graph& redex) {
 	// add mark on edge and change id on edge's node
-	std::unordered_set<int> used_vertices;
+	std::unordered_set<int> used_vertices{0};
+	for (const auto& edge : redex.edges) {
+		used_vertices.insert(edge.node1.second.mark);
+		used_vertices.insert(edge.node2.second.mark);
+	}
 	for (auto& host_edge : host_graph.edges) {
 		for (const auto& redex_node : redex.nodes) {
 			bool is_dangle = false;
@@ -118,7 +122,7 @@ void add_mark_on_edge(Graph& host_graph, const Graph& redex) {
 				// find a vertex not be used before
 				auto it = std::find_if(redex_node.vertices.begin(), redex_node.vertices.end(),
 					[used_vertices](Vertex v) -> bool {return used_vertices.count(v.mark) == 0; });
-				used_vertices.insert(it->mark);
+				//used_vertices.insert(it->mark);
 				host_edge.mark = it->mark; // mark this vertex for connecting
 			}
 		}
@@ -186,10 +190,3 @@ void reset_id_on_edges_and_nodes(Graph& graph) {
 	}
 }
 
-inline std::string get_host_graph_path() {
-	return "../host_graph.txt";
-}
-
-inline std::string get_production_path() {
-	return "../productions.txt";
-}

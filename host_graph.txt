@@ -1,0 +1,112 @@
+NODE
+0
+1
+start
+NODE
+1
+1
+fork
+NODE
+2
+1
+if
+NODE
+3
+1
+assign
+NODE
+4
+1
+assign
+NODE
+5
+1
+send
+NODE
+6
+1
+send
+NODE
+7
+1
+receive
+NODE
+8
+1
+assign
+NODE
+9
+1
+endif
+NODE
+10
+1
+join
+NODE
+11
+1
+end
+EDGE
+0
+0 -1
+1 -1
+EDGE
+1
+1 -1
+2 -1
+EDGE
+2
+1 -1
+4 -1
+EDGE
+3
+1 -1
+3 -1
+EDGE
+4
+2 -1
+6 -1
+EDGE
+5
+2 -1
+5 -1
+EDGE
+6
+5 -1
+9 -1
+EDGE
+7
+5 -1
+7 -1
+EDGE
+8
+3 -1
+7 -1
+EDGE
+9
+4 -1
+8 -1
+EDGE
+10
+6 -1
+7 -1
+EDGE
+11
+6 -1
+9 -1
+EDGE
+12
+9 -1
+10 -1
+EDGE
+13
+7 -1
+10 -1
+EDGE
+14
+8 -1
+10 -1
+EDGE
+15
+10 -1
+11 -1

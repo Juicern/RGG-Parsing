@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include "show_graph.h"
+#include "read_graph.h"
 int main() {
 	Vertex v1('R', 1);
 	Vertex v2('T', 2);
@@ -21,6 +22,9 @@ int main() {
 	Graph g(ns, es);
 
 	std::vector<Graph> gs{ g };
-	draw_process_in_html(gs);
+
+	auto gs1 = read_host_graph();
+
+	draw_process_in_html({gs1});
 	show_process();
 }

@@ -24,6 +24,12 @@
     <ClCompile Include="show_graph.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="read_graph.h">
+      <Filter>header</Filter>
+    </ClCompile>
+    <ClCompile Include="read_graph.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graph.h">

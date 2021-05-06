@@ -7,9 +7,22 @@
 <body>
 <div class = "mermaid">
 graph TD
-1[send] --- 2[receive]
-1[send] --- 2[receive]
-4[if]
+0[start] --- 1[fork]
+1[fork] --- 2[if]
+1[fork] --- 4[assign]
+1[fork] --- 3[assign]
+2[if] --- 6[send]
+2[if] --- 5[send]
+5[send] --- 9[endif]
+5[send] --- 7[receive]
+3[assign] --- 7[receive]
+4[assign] --- 8[assign]
+6[send] --- 7[receive]
+6[send] --- 9[endif]
+9[endif] --- 10[join]
+7[receive] --- 10[join]
+8[assign] --- 10[join]
+10[join] --- 11[end]
 </div>
 <hr/>
 </body>
