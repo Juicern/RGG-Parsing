@@ -43,3 +43,7 @@ The process is in the below:
 1. Complete the data structures
 2. Complete the graph-replacement algorithm
 3. Write test for the above and fix all the bugs
+
+## 6 May 2021 Update
+
+Finish the fuction reading host graph and productions from the local file. And pass the test.
