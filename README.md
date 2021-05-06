@@ -46,4 +46,4 @@ The process is in the below:
 
 ## 6 May 2021 Update
 
-Finish the fuction reading host graph and productions from the local file. And pass the test.
+Finish the function reading host graph and productions from the local file. And pass the test.
