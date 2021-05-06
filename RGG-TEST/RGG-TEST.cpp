@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 #include "../RGG-Backend/Graph.cpp"
+#include "../RGG-Backend/read_graph.cpp"
+#include "../RGG-Backend/show_graph.cpp"
 
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -347,7 +349,7 @@ namespace graph_test {
 			vector<Edge> es1{ e1, e2, e3 };
 
 			Graph host_g(ns1, es1);
-			Graph redex({ n3, n1 }, {});
+			Graph redex({ n3, n1 }, {e3});
 
 			delete_redex(host_g, redex);
 
@@ -384,17 +386,19 @@ namespace graph_test {
 			vector<Edge> es1{ e1, e2, e3 };
 
 			Graph host_g(ns1, es1);
-			Graph redex({ n3, n1 }, {e2});
+			Graph redex({ n3}, {e2});
 
 			delete_redex(host_g, redex);
 
-			Assert::IsTrue(host_g.edges.size() == 1);
-			Assert::IsTrue(host_g.nodes.size() == 1);
+			Assert::IsTrue(host_g.edges.size() == 2);
+			Assert::IsTrue(host_g.nodes.size() == 2);
 
 			Assert::IsTrue(host_g.edges[0] == e1);
-			Assert::IsTrue(host_g.edges[0].node1.first.id == -1);
+			Assert::IsTrue(host_g.edges[1] == e3);
+			Assert::IsTrue(host_g.edges[1].node2.first.id == -1);
 
-			Assert::IsTrue(host_g.nodes[0] == n2);
+			Assert::IsTrue(host_g.nodes[0] == n1);
+			Assert::IsTrue(host_g.nodes[1] == n2);
 		}
 	};
 	TEST_CLASS(test_for_add_sub_graph) {
@@ -425,46 +429,6 @@ namespace graph_test {
 
 			Assert::IsTrue(host_g.edges.size() == 2);
 			Assert::IsTrue(host_g.nodes.size() == 3);
-			Assert::IsTrue(host_g.edges[0] == e1);
-			Assert::IsTrue(host_g.edges[1] == e2);
-			Assert::IsTrue(host_g.nodes[0] == n1);
-			Assert::IsTrue(host_g.nodes[1] == n2);
-			Assert::IsTrue(host_g.nodes[2] == n3);
-		}
-		TEST_METHOD(test_for_dangle_edge_need_to_be_removed) {
-			Vertex v1('R', 1);
-			Vertex v2('T', 2);
-			vector<Vertex> vs1{ v1, v2 };
-			Node n1(1, false, "send", vs1);
-
-			Vertex v3('A', 4);
-			Vertex v4('Y', 5);
-			vector<Vertex> vs2{ v3, v4 };
-			Node n2(2, true, "receive", vs2);
-
-			//isolated node
-			Node n3(8, true, "state", {});
-
-			Edge e1(1, { n1, v1 }, { n2, v4 });
-			Edge e2(6, { n1, v2 }, { n2, v3 });
-			Edge e3(3, { n1, v2 }, { n3, {} });
-
-			vector<Node> ns1{ n1, n2 };
-			vector<Edge> es1{ e1, e2, e3 };
-
-			Graph host_g(ns1, es1);
-			// make host_g.edges[2] be a dangle edge
-			host_g.edges[2].mark = 8;
-			Graph sub_g({}, {});
-			
-			add_subgraph(host_g, sub_g);
-
-			Assert::IsTrue(host_g.edges.size() == 2);
-			Assert::IsTrue(host_g.nodes.size() == 2);
-			Assert::IsTrue(host_g.edges[0] == e1);
-			Assert::IsTrue(host_g.edges[1] == e2);
-			Assert::IsTrue(host_g.nodes[0] == n1);
-			Assert::IsTrue(host_g.nodes[1] == n2);
 		}
 		TEST_METHOD(test_for_dangle_edge_need_to_be_connected) {
 			Vertex v1('R', 1);
@@ -497,19 +461,122 @@ namespace graph_test {
 
 			Assert::IsTrue(host_g.edges.size() == 3);
 			Assert::IsTrue(host_g.nodes.size() == 3);
-			Assert::IsTrue(host_g.edges[0] == e1);
-			Assert::IsTrue(host_g.edges[1] == e2);
-			Assert::IsTrue(host_g.edges[2] == e3);
-			Assert::IsTrue(host_g.nodes[0] == n1);
-			Assert::IsTrue(host_g.nodes[1] == n2);
-			Assert::IsTrue(host_g.nodes[2] == n3);
-			Assert::IsTrue(host_g.edges[2].node2.first.id == 8);
-			Assert::IsTrue(host_g.edges[2].mark == 0);
 		}
 	};
-	TEST_CLASS(test_for_replace_redex) {
-		TEST_METHOD(test_for_simple_case) {
+	TEST_CLASS(test_for_reading) {
+		TEST_METHOD(test_for_generate_vertex) {
+			string s = "T\n2";
+			auto v = generate_vertex(s);
+			Assert::IsTrue(v.label == 'T');
+			Assert::IsTrue(v.mark == 2);
+		}
+		TEST_METHOD(test_for_generate_node_with_no_vertex) {
+			std::string s = "2\n1\nstate";
+			auto node = generate_node(s);
+			Assert::IsTrue(node.id == 2);
+			Assert::IsTrue(node.is_terminal = true);
+			Assert::IsTrue(node.label == "state");
+			Assert::IsTrue(node.vertices.size() == 0);
+		}
+		TEST_METHOD(test_for_generate_node_with_vertices) {
+			std::string s = "2\n1\nstate\nVERTEX\nT\n2\nVERTEX\nD\n3";
+			auto node = generate_node(s);
+			Assert::IsTrue(node.id == 2);
+			Assert::IsTrue(node.is_terminal = true);
+			Assert::IsTrue(node.label =="state");
+			Assert::IsTrue(node.vertices[0].label == 'T');
+			Assert::IsTrue(node.vertices[0].mark == 2);
+			Assert::IsTrue(node.vertices[1].label == 'D');
+			Assert::IsTrue(node.vertices[1].mark == 3);
+		}
+		TEST_METHOD(test_for_generate_edge_with_no_vertices) {
+			Node n1(2, false, "state", {});
+			Node n2(4, true, "if", {});
+			string s = "1\n2 -1\n4 -1";
+			auto edge = generate_edge(s, { n1, n2 });
+			Assert::IsTrue(edge.id == 1);
+			Assert::IsTrue(edge.mark == 0);
+			Assert::IsTrue(edge.node1.first == n1);
+			Assert::IsTrue(edge.node2.first == n2);
+			Assert::IsTrue(edge.node1.second.mark == NOMARK);
+			Assert::IsTrue(edge.node2.second.mark == NOMARK);
+		}
+		TEST_METHOD(test_for_generate_edge_with_Vertives) {
+			Node n1(2, false, "state", {Vertex('T', 2)});
+			Node n2(4, true, "if", {Vertex('M', 0)});
+			string s = "1\n2 2\n4 0";
+			auto edge = generate_edge(s, { n1, n2 });
+			Assert::IsTrue(edge.id == 1);
+			Assert::IsTrue(edge.mark == 0);
+			Assert::IsTrue(edge.node1.first == n1);
+			Assert::IsTrue(edge.node2.first == n2);
+			Assert::IsTrue(edge.node1.second.mark == 2);
+			Assert::IsTrue(edge.node2.second.mark == 0);
+		}
+		TEST_METHOD(test_for_generate_graph) {
+			string s = "NODE\n";
+			s += "2\n1\nstate\nVERTEX\nT\n2\nVERTEX\nD\n3\n";
+			s += "NODE\n";
+			s += "3\n0\nif\nVERTEX\nT\n4\nVERTEX\nD\n5\n";
+			s += "EDGE\n";
+			s += "1\n2 2\n3 5\n";
+			auto graph = generate_graph(s);
+			Assert::IsTrue(graph.nodes.size() == 2);
+			Assert::IsTrue(graph.edges.size() == 1);
+			Assert::IsTrue(graph.nodes[0].id == 2);
+			Assert::IsTrue(graph.nodes[1].id == 3);
+			Assert::IsTrue(graph.edges[0].node1.first.id = 2);
+			Assert::IsTrue(graph.edges[0].node2.first.id = 3);
+			Assert::IsTrue(graph.edges[0].node1.second.mark = 2);
+			Assert::IsTrue(graph.edges[0].node2.second.mark = 5);
+		}
+		TEST_METHOD(test_for_generate_production) {
+			string s;
+			s += "GRAPH\n";
+			s += "NODE\n";
+			s += "2\n1\nstate\nVERTEX\nT\n2\nVERTEX\nD\n3\n";
+			s += "NODE\n";
+			s += "3\n0\nif\nVERTEX\nT\n4\nVERTEX\nD\n5\n";
+			s += "EDGE\n";
+			s += "1\n2 2\n3 5\n";
 
+			s += "GRAPH\n";
+			s += "NODE\n";
+			s += "2\n1\nstate\nVERTEX\nT\n2\nVERTEX\nD\n3\n";
+			s += "NODE\n";
+			s += "3\n0\nif\nVERTEX\nT\n4\nVERTEX\nD\n5\n";
+			s += "EDGE\n";
+			s += "1\n2 2\n3 5\n";
+
+			auto production = generate_production(s);
+			auto graph1 = production.l_graph;
+			auto graph2 = production.r_graph;
+
+			Assert::IsTrue(graph1.nodes.size() == 2);
+			Assert::IsTrue(graph1.edges.size() == 1);
+			Assert::IsTrue(graph1.nodes[0].id == 2);
+			Assert::IsTrue(graph1.nodes[1].id == 3);
+			Assert::IsTrue(graph1.edges[0].node1.first.id = 2);
+			Assert::IsTrue(graph1.edges[0].node2.first.id = 3);
+			Assert::IsTrue(graph1.edges[0].node1.second.mark = 2);
+			Assert::IsTrue(graph1.edges[0].node2.second.mark = 5);
+
+			Assert::IsTrue(graph2.nodes.size() == 2);
+			Assert::IsTrue(graph2.edges.size() == 1);
+			Assert::IsTrue(graph2.nodes[0].id == 2);
+			Assert::IsTrue(graph2.nodes[1].id == 3);
+			Assert::IsTrue(graph2.edges[0].node1.first.id = 2);
+			Assert::IsTrue(graph2.edges[0].node2.first.id = 3);
+			Assert::IsTrue(graph2.edges[0].node1.second.mark = 2);
+			Assert::IsTrue(graph2.edges[0].node2.second.mark = 5);
+		}
+		TEST_METHOD(test_for_read_host_graph) {
+			//auto graph = read_host_graph();
+			//draw_process_in_html({ graph });
+			//show_process();
+		}
+		TEST_METHOD(test_for_read_productions) {
+			//read_productions();
 		}
 	};
 }
