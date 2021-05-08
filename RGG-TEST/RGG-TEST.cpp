@@ -254,9 +254,6 @@ namespace graph_test {
 			}	
 		}
 	};
-	TEST_CLASS(test_for_find_redex) {
-		
-	};
 	TEST_CLASS(test_for_delete_redex) {
 		TEST_METHOD(test_for_no_dangle_edge) {
 			Vertex v1('R', 1);
@@ -476,7 +473,7 @@ namespace graph_test {
 			Assert::IsTrue(node.id == 2);
 			Assert::IsTrue(node.is_terminal = true);
 			Assert::IsTrue(node.label == "state");
-			Assert::IsTrue(node.vertices.size() == 0);
+			Assert::IsTrue(node.vertices.size() == 1);
 		}
 		TEST_METHOD(test_for_generate_node_with_vertices) {
 			std::string s = "2\n1\nstate\nVERTEX\nT\n2\nVERTEX\nD\n3";
@@ -577,6 +574,23 @@ namespace graph_test {
 		}
 		TEST_METHOD(test_for_read_productions) {
 			//read_productions();
+		}
+	};
+	TEST_CLASS(test_for_find_redex) {
+		TEST_METHOD(test_for_comb_edge) {
+			Edge edge1(1, {}, {});
+			Edge edge2(2, {}, {});
+			Edge edge3(3, {}, {});
+			Edge edge4(4, {}, {});
+			Edge edge5(5, {}, {});
+			Edge edge6(6, {}, {});
+			std::vector<Edge> edges{ edge1, edge2, edge3, edge4, edge5, edge6 };
+
+			auto comb_edges1 = comb_edge(edges, 6);
+			Assert::IsTrue(comb_edges1.size() == 1);
+
+			auto comb_edges2 = comb_edge(edges, 5);
+			Assert::IsTrue(comb_edges2.size() == 6);
 		}
 	};
 }
