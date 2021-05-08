@@ -1,4 +1,4 @@
-#pragma onced
+#pragma once
 #include "Graph.h"
 void show_process();
 void draw_process_in_html(const std::vector<Graph>&);

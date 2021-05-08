@@ -46,7 +46,7 @@ public:
 	bool operator==(const Edge&);
 public:
 	int id;
-	int mark; // 不需要删除：0， 悬边：连接的被删顶点的id， 需要被删的边： -1
+	int mark; // 0 means no delete node, while other values mean deleted node's vertex mark
 	std::pair<Node, Vertex> node1;
 	std::pair<Node, Vertex> node2;
 };
@@ -70,8 +70,18 @@ public:
 	Graph r_graph;
 };
 std::vector<Graph> find_redex(const Graph&, const Graph&);
-std::vector<std::vector<Edge>> comb_edge(const std::vector<Edge>&, int);
-void comb_edge(const std::vector<Edge>&, int, int, std::vector<std::vector<Edge>>&, std::vector<Edge>&);
+Graph get_redex_by_matched(const Graph&, std::unordered_map<int, int>&, std::unordered_map<int, int>&);
+template<class T >
+std::vector<std::vector<T>> comb_elem(const std::vector<T>&, int);
+template<class T >
+void comb_elem(const std::vector<T>&, int, int, std::vector<std::vector<T>>&, std::vector<T>&);
+std::tuple<bool, std::unordered_map<int, int>, std::unordered_map<int, int>> is_node_matched(const std::vector<Edge>&, const std::vector<Edge>&);
+std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Edge>&, const std::vector<Edge>&);
+std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Edge>&, const std::vector<Edge>&, int, std::unordered_map<int, int>&);
+std::unordered_map<std::string, int> get_lable_count(const std::vector<Edge>&);
+std::pair<bool, std::vector<std::unordered_map<int, int>>> handle_isolated_nodes(const std::vector<Node>&, const std::vector<Node>&, const std::unordered_map<int, int>&);
+std::pair<bool, std::vector<std::unordered_map<int, int>>> is_isolated_node_margin(const std::vector<Node>&, const std::vector<Node>&);
+void get_isolated_matched_node_maps(std::unordered_map<std::string, std::vector<std::vector<Node>>>&, std::unordered_set<std::string>&, const std::vector<Node>&, std::unordered_map<int, int>&, std::vector<std::unordered_map<int, int>>&);
 std::vector<Graph> replace_redex(const Graph&, const std::vector<Graph>&, const Graph&);
 Graph replace_redex(const Graph&, const Graph&, const Graph&);
 void delete_redex(Graph&, const Graph&);
