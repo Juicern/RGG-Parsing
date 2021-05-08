@@ -586,10 +586,10 @@ namespace graph_test {
 			Edge edge6(6, {}, {});
 			std::vector<Edge> edges{ edge1, edge2, edge3, edge4, edge5, edge6 };
 
-			auto comb_edges1 = comb_edge(edges, 6);
+			auto comb_edges1 = comb_edge_or_node(edges, 6);
 			Assert::IsTrue(comb_edges1.size() == 1);
 
-			auto comb_edges2 = comb_edge(edges, 5);
+			auto comb_edges2 = comb_edge_or_node(edges, 5);
 			Assert::IsTrue(comb_edges2.size() == 6);
 		}
 	};
