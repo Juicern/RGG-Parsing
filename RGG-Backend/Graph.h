@@ -69,7 +69,9 @@ public:
 	Graph l_graph;
 	Graph r_graph;
 };
-std::vector<Graph> find_redex(const Graph&, const Graph&, const std::vector<Production>&);
+std::vector<Graph> find_redex(const Graph&, const Graph&);
+std::vector<std::vector<Edge>> comb_edge(const std::vector<Edge>&, int);
+void comb_edge(const std::vector<Edge>&, int, int, std::vector<std::vector<Edge>>&, std::vector<Edge>&);
 std::vector<Graph> replace_redex(const Graph&, const std::vector<Graph>&, const Graph&);
 Graph replace_redex(const Graph&, const Graph&, const Graph&);
 void delete_redex(Graph&, const Graph&);

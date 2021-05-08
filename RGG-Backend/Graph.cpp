@@ -22,7 +22,7 @@ bool Node::operator ==(const Node& n) {
 }
 
 // Edge
-Edge::Edge() noexcept : id(NOID) {}
+Edge::Edge() noexcept : id(NOID), mark(NOMARK){}
 Edge::Edge(const int& _id, const std::pair<Node, Vertex>& _node1, const std::pair<Node, Vertex>& _node2) : id(_id), mark(0) {
 	node1.first = _node1.first;
 	node1.second = _node1.second;
@@ -52,8 +52,134 @@ Production::Production(const Graph& _l_graph, const Graph& _r_graph) : l_graph(_
 
 
 // find the redex
-std::vector<Graph> find_redex(Graph& host_graph, Graph& sub_graph) {
-	throw - 1;
+std::vector<Graph> find_redex(const Graph& host_graph, const Graph& sub_graph) {
+	auto comb_edges = comb_edge(host_graph.edges, sub_graph.edges.size());
+}
+
+std::vector<std::vector<Edge>> comb_edge(const std::vector<Edge>& host_edges, int n) {
+	std::vector<std::vector<Edge>> comb_edges;
+	std::vector<Edge> cur_edges;
+	comb_edge(host_edges, n, 0, comb_edges, cur_edges);
+	return comb_edges;
+}
+
+void comb_edge(const std::vector<Edge>& host_edges, int n, int index, std::vector<std::vector<Edge>>& comb_edges, std::vector<Edge>& cur_edges) {
+	if (n == 0) {
+		comb_edges.emplace_back(cur_edges);
+		return;
+	}
+	if (host_edges.size() - index < n) {
+		return;
+	}
+	cur_edges.emplace_back(host_edges[index]);
+	comb_edge(host_edges, n - 1, index + 1, comb_edges, cur_edges);
+	cur_edges.pop_back();
+	comb_edge(host_edges, n, index + 1, comb_edges, cur_edges);
+}
+
+// is_ok, host_edge2sub_edge, host_node2sub_node
+std::tuple<bool, std::unordered_map<int, int>, std::unordered_map<int, int>> is_node_margin(const std::vector<Edge>& host_edges, const std::vector<Edge>& sub_edges) {
+	// 1. label相同的node数量的一样
+	auto host_lable_count = get_lable_count(host_edges);
+	auto sub_lable_count = get_lable_count(sub_edges);
+	for (const auto& [key, value] : host_lable_count) {
+		if (sub_lable_count.count(key) == 0 || sub_lable_count[key] != value) {
+			return { false, {}, {} };
+		}
+	}
+	// 2. 再去匹配
+	std::vector<Edge> temp_edges(host_edges.begin(), host_edges.end());
+	do {
+		auto [is_ok, host_node2sub_node] = is_one_to_one(host_edges, sub_edges);
+		if (is_ok) {
+			std::unordered_map<int, int> host_edge2sub_edge;
+			for (int i = 0; i < host_edges.size(); ++i) {
+				host_edge2sub_edge[host_edges[i].id] = sub_edges[i].id;
+			}
+			return { false,  host_edge2sub_edge,  host_node2sub_node };
+		}
+	} while (next_permutation(host_edges.begin(), host_edges.end(), [](const Edge& edge1, const Edge& edge2) {return edge1.id < edge2.id; }));
+	return { false, {}, {} };
+}
+
+std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Edge>& host_edges, const std::vector<Edge>& sub_edges) {
+	std::unordered_map<int, int> host_node2sub_node;
+	return is_one_to_one(host_edges, sub_edges, 0, host_node2sub_node);
+}
+
+std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Edge>& host_edges, const std::vector<Edge>& sub_edges, int index, std::unordered_map<int, int>& host_node2sub_node) {
+	if (index == host_edges.size()) {
+		return { true, host_node2sub_node };
+	}
+	if (host_edges[index].node1.first.label == sub_edges[index].node1.first.label && host_edges[index].node2.first.label == sub_edges[index].node2.first.label) {
+		if (host_node2sub_node.count(host_edges[index].node1.first.id) == 0) {
+			host_node2sub_node[host_edges[index].node1.first.id] = sub_edges[index].node1.first.id;
+		}
+		else {
+			if (host_node2sub_node[host_edges[index].node1.first.id] == sub_edges[index].node1.first.id) {
+				if (host_node2sub_node.count(host_edges[index].node2.first.id) == 0) {
+					host_node2sub_node[host_edges[index].node2.first.id] = sub_edges[index].node2.first.id;
+				}
+				else {
+					if (host_node2sub_node[host_edges[index].node2.first.id] == sub_edges[index].node2.first.id) {
+						auto [is_ok, m] = is_one_to_one(host_edges, sub_edges, index + 1, host_node2sub_node);
+						if (is_ok) {
+							return { true, m };
+						}
+					}
+				}
+			}
+		}
+		if (host_node2sub_node.count(host_edges[index].node1.first.id)) {
+			host_node2sub_node.erase(host_edges[index].node1.first.id);
+		}
+		if (host_node2sub_node.count(host_edges[index].node2.first.id)) {
+			host_node2sub_node.erase(host_edges[index].node2.first.id);
+		}
+	}
+	if (host_edges[index].node1.first.label == sub_edges[index].node2.first.label && host_edges[index].node2.first.label == sub_edges[index].node1.first.label) {
+		if (host_node2sub_node.count(host_edges[index].node1.first.id) == 0) {
+			host_node2sub_node[host_edges[index].node1.first.id] = sub_edges[index].node2.first.id;
+		}
+		else {
+			if (host_node2sub_node[host_edges[index].node1.first.id] == sub_edges[index].node2.first.id) {
+				if (host_node2sub_node.count(host_edges[index].node2.first.id) == 0) {
+					host_node2sub_node[host_edges[index].node2.first.id] = sub_edges[index].node1.first.id;
+				}
+				else {
+					if (host_node2sub_node[host_edges[index].node2.first.id] == sub_edges[index].node1.first.id) {
+						auto [is_ok, m] = is_one_to_one(host_edges, sub_edges, index + 1, host_node2sub_node);
+						if (is_ok) {
+							return { true, m };
+						}
+						
+					}
+				}
+			}
+		}
+		if (host_node2sub_node.count(host_edges[index].node1.first.id)) {
+			host_node2sub_node.erase(host_edges[index].node1.first.id);
+		}
+		if (host_node2sub_node.count(host_edges[index].node2.first.id)) {
+			host_node2sub_node.erase(host_edges[index].node2.first.id);
+		}
+	}
+	return { false, {} };
+}
+
+
+std::unordered_map<std::string, int> get_lable_count(const std::vector<Edge>& edges) {
+	std::unordered_map<std::string, int> lable_count;
+	std::unordered_set<int> used_ids;
+	for (const auto& edge : edges) {
+		if (used_ids.count(edge.node1.first.id) == 0) {
+			lable_count[edge.node1.first.label]++;
+		}
+		if (used_ids.count(edge.node2.first.id) == 0) {
+			lable_count[edge.node2.first.label]++;
+		}
+	}
+	return lable_count;
 }
 
 Graph replace_redex(const Graph& host_graph, const Graph& redex, const Graph& sub_graph) {
