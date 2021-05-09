@@ -58,7 +58,7 @@ std::vector<Graph> find_redex(const Graph& host_graph,
 	std::vector<Graph> redexes;
 	auto comb_edges = comb_elem(host_graph.edges, sub_graph.edges.size());
 	for (const auto& comb_elem : comb_edges) {
-		auto [is_ok, sub_edge2host_edge, sub_node2host_node] = is_node_matched(host_graph.edges, sub_graph.edges);
+		auto [is_ok, sub_edge2host_edge, sub_node2host_node] = is_node_matched(comb_elem, sub_graph.edges);
 		if (is_ok) {
 			// if there are isolated nodes
 			if (sub_node2host_node.size() != sub_graph.nodes.size()) {
@@ -66,9 +66,13 @@ std::vector<Graph> find_redex(const Graph& host_graph,
 				if (!flag) continue;
 				for (const auto& isolated_id2host_id : isolated_id2host_ids) {
 					// merge two map
-					sub_node2host_node.insert(isolated_id2host_id.begin(), isolated_id2host_id.end());
+					for (const auto& [key, value] : isolated_id2host_id) {
+						sub_node2host_node[key] = value;
+					}
 					redexes.emplace_back(get_redex_by_matched(sub_graph, sub_edge2host_edge, sub_node2host_node));
-					sub_node2host_node.erase(isolated_id2host_id.begin(), isolated_id2host_id.end());
+					for (const auto& [key, value] : isolated_id2host_id) {
+						sub_node2host_node.erase(key);
+					}
 				}
 			}
 			else {
@@ -78,22 +82,41 @@ std::vector<Graph> find_redex(const Graph& host_graph,
 	}
 	return redexes;
 }
-
+/// <summary>
+/// get a redex by using matched edges and nodes 
+/// </summary>
+/// <param name="sub_graph"> sub graph </param>
+/// <param name="edge_map"> sub graph edge id to host graph edge id </param>
+/// <param name="node_map"> sub graph node is to host graph node id </param>
+/// <returns> redex </returns>
 Graph get_redex_by_matched(const Graph& sub_graph, 
 						   std::unordered_map<int, int>& edge_map, 
 						   std::unordered_map<int, int>& node_map) {
 	auto redex(sub_graph);
-	// modify edge id
+	// modify edge
 	for (auto& edge : redex.edges) {
 		edge.id = edge_map[edge.id];
+		edge.node1.first.id = node_map[edge.node1.first.id];
+		edge.node1.first.vertices = {};
+		edge.node1.second = {};
+		edge.node2.first.id = node_map[edge.node2.first.id];
+		edge.node2.first.vertices = {};
+		edge.node2.second = {};
 	}
-	// modify node id
+	// modify node
 	for (auto& node : redex.nodes) {
 		node.id = node_map[node.id];
+		node.vertices = {};
 	}
 	return redex;
 }
-
+/// <summary>
+/// Implement combination (take n elements from host_elems, with no order)
+/// </summary>
+/// <typeparam name="T">the type of elements</typeparam>
+/// <param name="host_elems">elements need to be take</param>
+/// <param name="n">amount to be taken</param>
+/// <returns>all combinations</returns>
 template<class T>
 std::vector<std::vector<T>> comb_elem(const std::vector<T>& host_elems, 
 									  int n) {
@@ -102,7 +125,15 @@ std::vector<std::vector<T>> comb_elem(const std::vector<T>& host_elems,
 	comb_elem<T>(host_elems, n, 0, comb_elems, cur_elems);
 	return comb_elems;
 }
-
+/// <summary>
+/// recursive version of comb_elem (call by non-recursive version)
+/// </summary>
+/// <typeparam name="T">the type of elements</typeparam>
+/// <param name="host_elems">elements need to be take</param>
+/// <param name="n">amount to be taken</param>
+/// <param name="index">current index of element</param>
+/// <param name="comb_elems">all combinations</param>
+/// <param name="cur_elems">current combination</param>
 template<class T>
 void comb_elem(const std::vector<T>& host_elems, 
 			   int n, 
@@ -122,7 +153,12 @@ void comb_elem(const std::vector<T>& host_elems,
 	comb_elem(host_elems, n, index + 1, comb_elems, cur_elems);
 }
 
-// is_ok, sub_edge2host_edge, sub_node2host_node
+/// <summary>
+/// judge if node can be matched, and return the mappings of edges and nodes
+/// </summary>
+/// <param name="host_edges">host graph edges</param>
+/// <param name="sub_edges">sub graph edges</param>
+/// <returns>is matched, a map subgraph edge id mapping to host graph edge id, a map subgraph node id mapping to host graph node id</returns>
 std::tuple<bool, std::unordered_map<int, int>, std::unordered_map<int, int>> is_node_matched(const std::vector<Edge>& host_edges, 
 																							 const std::vector<Edge>& sub_edges) {
 	// 1. if their lable is same, the label count should be the same
@@ -148,13 +184,25 @@ std::tuple<bool, std::unordered_map<int, int>, std::unordered_map<int, int>> is_
 	} while (next_permutation(temp_edges.begin(), temp_edges.end(), [](const Edge& edge1, const Edge& edge2) { return edge1.id < edge2.id; }));
 	return { false, {}, {} };
 }
-
+/// <summary>
+/// judge if the nodes can be one to one matched by order
+/// </summary>
+/// <param name="host_edges">host graph edges</param>
+/// <param name="sub_edges">host graph nodes</param>
+/// <returns>is one to one matched, map subgraph node mapping to host graph node</returns>
 std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Edge>& host_edges, 
 															const std::vector<Edge>& sub_edges) {
 	std::unordered_map<int, int> sub_node2host_node;
 	return is_one_to_one(host_edges, sub_edges, 0, sub_node2host_node);
 }
-
+/// <summary>
+/// recursive version of is_one_to_one (call by non_recursive version)
+/// </summary>
+/// <param name="host_edges">host graph edges</param>
+/// <param name="sub_edges">host graph edges</param>
+/// <param name="index">current index of edge</param>
+/// <param name="sub_node2host_node"></param>
+/// <returns>is one to one, map subgraph node mapping to host graph node</returns>
 std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Edge>& host_edges, 
 															const std::vector<Edge>& sub_edges, 
 															int index, 
@@ -162,76 +210,68 @@ std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Ed
 	if (index == host_edges.size()) {
 		return { true, sub_node2host_node };
 	}
+	auto is_same_to_old_record = [](std::unordered_map<int, int>& m, int id1, int id2) {
+		if (m.count(id1) == 0 || m[id1] == id2) {
+			return true;
+		}
+		return false;
+	};
 	if (host_edges[index].node1.first.label == sub_edges[index].node1.first.label && host_edges[index].node2.first.label == sub_edges[index].node2.first.label) {
-		if (sub_node2host_node.count(sub_edges[index].node1.first.id) == 0) {
+		if (is_same_to_old_record(sub_node2host_node, sub_edges[index].node1.first.id, host_edges[index].node1.first.id)
+			&& is_same_to_old_record(sub_node2host_node, sub_edges[index].node2.first.id, host_edges[index].node2.first.id)) {
 			sub_node2host_node[sub_edges[index].node1.first.id] = host_edges[index].node1.first.id;
-		}
-		else {
-			if (sub_node2host_node[sub_edges[index].node1.first.id] == host_edges[index].node1.first.id) {
-				if (sub_node2host_node.count(sub_edges[index].node2.first.id) == 0) {
-					sub_node2host_node[sub_edges[index].node2.first.id] = host_edges[index].node2.first.id;
-				}
-				else {
-					if (sub_node2host_node[sub_edges[index].node2.first.id] == host_edges[index].node2.first.id) {
-						auto [is_ok, m] = is_one_to_one(host_edges, sub_edges, index + 1, sub_node2host_node);
-						if (is_ok) {
-							return { true, m };
-						}
-					}
-				}
+			sub_node2host_node[sub_edges[index].node2.first.id] = host_edges[index].node2.first.id;
+			auto [is_ok, m] = is_one_to_one(host_edges, sub_edges, index + 1, sub_node2host_node);
+			if (is_ok) {
+				return { true, m };
 			}
-		}
-		if (sub_node2host_node.count(sub_edges[index].node1.first.id)) {
 			sub_node2host_node.erase(sub_edges[index].node1.first.id);
-		}
-		if (sub_node2host_node.count(sub_edges[index].node2.first.id)) {
 			sub_node2host_node.erase(sub_edges[index].node2.first.id);
 		}
 	}
 	if (host_edges[index].node1.first.label == sub_edges[index].node2.first.label && host_edges[index].node2.first.label == sub_edges[index].node1.first.label) {
-		if (sub_node2host_node.count(sub_edges[index].node1.first.id) == 0) {
+		if (is_same_to_old_record(sub_node2host_node, sub_edges[index].node2.first.id, host_edges[index].node1.first.id)
+			&& is_same_to_old_record(sub_node2host_node, sub_edges[index].node1.first.id, host_edges[index].node2.first.id)) {
+			sub_node2host_node[sub_edges[index].node2.first.id] = host_edges[index].node1.first.id;
 			sub_node2host_node[sub_edges[index].node1.first.id] = host_edges[index].node2.first.id;
-		}
-		else {
-			if (sub_node2host_node[sub_edges[index].node1.first.id] == host_edges[index].node2.first.id) {
-				if (sub_node2host_node.count(sub_edges[index].node2.first.id) == 0) {
-					sub_node2host_node[sub_edges[index].node2.first.id] = host_edges[index].node1.first.id;
-				}
-				else {
-					if (sub_node2host_node[sub_edges[index].node2.first.id] == host_edges[index].node1.first.id) {
-						auto [is_ok, m] = is_one_to_one(host_edges, sub_edges, index + 1, sub_node2host_node);
-						if (is_ok) {
-							return { true, m };
-						}
-						
-					}
-				}
+			auto [is_ok, m] = is_one_to_one(host_edges, sub_edges, index + 1, sub_node2host_node);
+			if (is_ok) {
+				return { true, m };
 			}
-		}
-		if (sub_node2host_node.count(sub_edges[index].node1.first.id)) {
-			sub_node2host_node.erase(sub_edges[index].node1.first.id);
-		}
-		if (sub_node2host_node.count(sub_edges[index].node2.first.id)) {
 			sub_node2host_node.erase(sub_edges[index].node2.first.id);
+			sub_node2host_node.erase(sub_edges[index].node1.first.id);
 		}
 	}
 	return { false, {} };
 }
-
+/// <summary>
+/// get the amount of each node label
+/// </summary>
+/// <param name="edges">all the edges</param>
+/// <returns>map node label mapping to amount</returns>
 std::unordered_map<std::string, int> get_lable_count(const std::vector<Edge>& edges) {
 	std::unordered_map<std::string, int> lable_count;
 	std::unordered_set<int> used_ids;
 	for (const auto& edge : edges) {
 		if (used_ids.count(edge.node1.first.id) == 0) {
 			lable_count[edge.node1.first.label]++;
+			used_ids.insert(edge.node1.first.id);
 		}
 		if (used_ids.count(edge.node2.first.id) == 0) {
 			lable_count[edge.node2.first.label]++;
+			used_ids.insert(edge.node2.first.id);
 		}
 	}
 	return lable_count;
 }
 
+/// <summary>
+/// handle isolated nodes in sub graph, judge if it can be matched to available nodes in host graph
+/// </summary>
+/// <param name="host_nodes">host graph nodes</param>
+/// <param name="sub_nodes">subgraph nodes</param>
+/// <param name="sub_node2host_node">existing map that subgraph node mapping to host graph node</param>
+/// <returns>can_be_matched, maps with all possible matched combinations</returns>
 std::pair<bool, std::vector<std::unordered_map<int, int>>> handle_isolated_nodes(const std::vector<Node>& host_nodes, 
 																			     const std::vector<Node>& sub_nodes, 
 																				 const std::unordered_map<int, int>& sub_node2host_node) {
@@ -250,11 +290,17 @@ std::pair<bool, std::vector<std::unordered_map<int, int>>> handle_isolated_nodes
 		std::remove_if(isolated_nodes.begin(), isolated_nodes.end(),
 			[sub_node2host_node](Node node) {return sub_node2host_node.count(node.id) != 0; }),
 		isolated_nodes.end());
-	auto [is_ok, isoalated_node2host_node] = is_isolated_node_margin(available_host_nodes, isolated_nodes);
-	return is_isolated_node_margin(available_host_nodes, isolated_nodes);
-}
 
-std::pair<bool, std::vector<std::unordered_map<int, int>>> is_isolated_node_margin(const std::vector<Node>& available_host_nodes, 
+	auto [is_ok, isoalated_node2host_node] = is_isolated_node_matched(available_host_nodes, isolated_nodes);
+	return is_isolated_node_matched(available_host_nodes, isolated_nodes);
+}
+/// <summary>
+/// judge if all the isolated nodes in sub graph can be matched to the available nodes in host graph
+/// </summary>
+/// <param name="available_host_nodes"> available host graph nodes</param>
+/// <param name="isolated_nodes">isolated nodes in subgraph</param>
+/// <returns>can_be_matched, maps with all possible matched combinations</returns>
+std::pair<bool, std::vector<std::unordered_map<int, int>>> is_isolated_node_matched(const std::vector<Node>& available_host_nodes, 
 																				   const std::vector<Node>& isolated_nodes) {
 	std::unordered_map<std::string, std::vector<Node>> isolated_lable2nodes;
 	std::unordered_map<std::string, std::vector<Node>> available_lable2nodes;
@@ -264,7 +310,7 @@ std::pair<bool, std::vector<std::unordered_map<int, int>>> is_isolated_node_marg
 	for (const auto& node : available_host_nodes) {
 		available_lable2nodes[node.label].emplace_back(node);
 	}
-	// check
+	// check if available lables size is greater than isolated lables size
 	for (const auto& [lable, nodes] : isolated_lable2nodes) {
 		if (nodes.size() > available_lable2nodes[lable].size()) {
 			return { false, {} };
@@ -278,13 +324,21 @@ std::pair<bool, std::vector<std::unordered_map<int, int>>> is_isolated_node_marg
 		host_label2comb[label] = comb_elem(nodes, isolated_lable2nodes[label].size());
 		available_labels.insert(label);
 	}
-	get_isolated_matched_node_maps(host_label2comb, available_labels, isolated_nodes, cur_sub_id2host_id, sub_id2host_ids);
+	get_isolated_matched_node_maps(host_label2comb, available_labels, isolated_lable2nodes, cur_sub_id2host_id, sub_id2host_ids);
 	return { true, sub_id2host_ids };
 }
 
+/// <summary>
+/// recursive version of is_isolated_node_matched (call by it)
+/// </summary>
+/// <param name="host_lable2comb">a map each host graph node lable mapping to their combination</param>
+/// <param name="available_labels">current available labels</param>
+/// <param name="isolated_label2nodes">isolated node lable mapping to itself</param>
+/// <param name="cur_sub_id2host_id">current map sub graph node mapping to host graph node</param>
+/// <param name="sub_id2host_ids">all possible maps that sub graph node mapping to host graph node</param>
 void get_isolated_matched_node_maps(std::unordered_map<std::string, std::vector<std::vector<Node>>>& host_lable2comb,
 									std::unordered_set<std::string>& available_labels,
-									const std::vector<Node>& isolated_nodes,
+									std::unordered_map<std::string, std::vector<Node>>& isolated_label2nodes,
 									std::unordered_map<int, int>& cur_sub_id2host_id, 
 									std::vector<std::unordered_map<int, int>>& sub_id2host_ids) {
 	if (available_labels.size() == 0) {
@@ -293,14 +347,15 @@ void get_isolated_matched_node_maps(std::unordered_map<std::string, std::vector<
 	}
 	// find an available lable(so just choose begin()) 
 	auto cur_label = *available_labels.begin();
+	// recursively map each subgraph(isolated) node lable to host(available) graph node 
 	available_labels.erase(cur_label);
 	for (const auto& nodes : host_lable2comb[cur_label]) {
-		for (int i = 0; i < isolated_nodes.size(); ++i) {
-			cur_sub_id2host_id[isolated_nodes[i].id] = nodes[i].id;
+		for (int i = 0; i < isolated_label2nodes[cur_label].size(); ++i) {
+			cur_sub_id2host_id[isolated_label2nodes[cur_label][i].id] = nodes[i].id;
 		}
-		get_isolated_matched_node_maps(host_lable2comb, available_labels, isolated_nodes, cur_sub_id2host_id, sub_id2host_ids);
-		for (int i = 0; i < isolated_nodes.size(); ++i) {
-			cur_sub_id2host_id.erase(isolated_nodes[i].id);
+		get_isolated_matched_node_maps(host_lable2comb, available_labels, isolated_label2nodes, cur_sub_id2host_id, sub_id2host_ids);
+		for (int i = 0; i < isolated_label2nodes[cur_label].size(); ++i) {
+			cur_sub_id2host_id.erase(isolated_label2nodes[cur_label][i].id);
 		}
 	}
 	available_labels.insert(cur_label);
