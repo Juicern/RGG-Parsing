@@ -576,8 +576,244 @@ namespace graph_test {
 			//read_productions();
 		}
 	};
+	TEST_CLASS(test_for_is_one_to_one) {
+		TEST_METHOD(test_with_same_node_order_matched) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Node n3(3, true, "state", {});
+			Edge e1(1, { n1, {} }, { n2, {} });
+			Edge e2(2, { n1, {} }, { n3, {} });
+
+			Node n4(4, true, "state", {});
+			Node n5(5, true, "if", {});
+			Node n6(6, true, "state", {});
+			Edge e3(4, { n4, {} }, { n5, {} });
+			Edge e4(4, { n4, {} }, { n6, {} });
+
+			auto [is_ok, node_map] = is_one_to_one({ e1, e2 }, { e3, e4 });
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_map[4] == 1);
+			Assert::IsTrue(node_map[5] == 2);
+			Assert::IsTrue(node_map[6] == 3);
+		}
+		TEST_METHOD(test_with_not_same_node_order_matched) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Node n3(3, true, "state", {});
+			Edge e1(1, { n1, {} }, { n2, {} });
+			Edge e2(2, { n1, {} }, { n3, {} });
+
+			Node n4(4, true, "state", {});
+			Node n5(5, true, "if", {});
+			Node n6(6, true, "state", {});
+			Edge e3(4, { n5, {} }, { n4, {} });
+			Edge e4(4, { n4, {} }, { n6, {} });
+
+			auto [is_ok, node_map] = is_one_to_one({ e1, e2 }, { e3, e4 });
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_map[4] == 1);
+			Assert::IsTrue(node_map[5] == 2);
+			Assert::IsTrue(node_map[6] == 3);
+		}
+		TEST_METHOD(test_with_label_not_matched) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Edge e1(1, { n1, {} }, { n2, {} });
+			Node n3(5, true, "state", {});
+			Node n4(4, true, "else", {});
+			Edge e2(4, { n3, {} }, { n4, {} });
+			auto [is_ok, node_map] = is_one_to_one({ e1 }, { e2 });
+			Assert::IsTrue(!is_ok);
+		}
+		TEST_METHOD(test_with_duplicate_label) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "state", {});
+			Node n3(3, true, "state", {});
+			Node n4(4, true, "if", {});
+			Node n5(5, true, "if", {});
+			Edge e1(1, { n1, {} }, { n4, {} });
+			Edge e2(2, { n2, {} }, { n4, {} });
+			Edge e3(2, { n2, {} }, { n5, {} });
+			Edge e4(2, { n3, {} }, { n4, {} });
+
+			Node n6(6, true, "state", {});
+			Node n7(7, true, "state", {});
+			Node n8(8, true, "state", {});
+			Node n9(9, true, "if", {});
+			Node n10(10, true, "if", {});
+			Edge e5(4, { n6, {} }, { n9, {} });
+			Edge e6(4, { n7, {} }, { n10, {} });
+			Edge e7(4, { n6, {} }, { n9, {} });
+			Edge e8(4, { n8, {} }, { n10, {} });
+
+			auto [is_ok, node_map] = is_one_to_one({ e1, e2, e3, e4 }, { e5, e6, e7, e8 });
+			Assert::IsTrue(!is_ok);
+		}
+	};
+	TEST_CLASS(test_for_is_node_matched) {
+		TEST_METHOD(test_for_get_lable_count) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "state", {});
+			Node n3(3, true, "state", {});
+			Node n4(4, true, "if", {});
+			Node n5(5, true, "if", {});
+			Edge e1(1, { n1, {} }, { n4, {} });
+			Edge e2(2, { n2, {} }, { n4, {} });
+			Edge e3(2, { n2, {} }, { n5, {} });
+			Edge e4(2, { n3, {} }, { n4, {} });
+
+			auto lable_count = get_lable_count({ e1, e2, e3, e4 });
+			Assert::IsTrue(lable_count["state"] == 3);
+			Assert::IsTrue(lable_count["if"] == 2);
+		}
+		TEST_METHOD(test_for_nodes_count_not_same) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "state", {});
+			Node n3(3, true, "state", {});
+			Node n4(4, true, "if", {});
+			Node n5(5, true, "if", {});
+			Edge e1(1, { n1, {} }, { n4, {} });
+			Edge e2(2, { n2, {} }, { n4, {} });
+			Edge e3(2, { n2, {} }, { n5, {} });
+			Edge e4(2, { n3, {} }, { n4, {} });
+
+			Node n6(6, true, "state", {});
+			Node n7(7, true, "state", {});
+			Node n8(8, true, "state", {});
+			Node n9(9, true, "if", {});
+			Edge e5(4, { n6, {} }, { n9, {} });
+			Edge e6(4, { n7, {} }, { n8, {} });
+			Edge e7(4, { n6, {} }, { n9, {} });
+			Edge e8(4, { n6, {} }, { n7, {} });
+
+			auto [is_ok, edge_map, node_map] = is_node_matched({ e1, e2, e3, e4 }, { e5, e6, e7, e8 });
+			Assert::IsTrue(!is_ok);
+		}
+		TEST_METHOD(test_for_duplicate_label) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "state", {});
+			Node n3(3, true, "state", {});
+			Node n4(4, true, "if", {});
+			Node n5(5, true, "if", {});
+			Edge e1(1, { n1, {} }, { n4, {} });
+			Edge e2(2, { n2, {} }, { n4, {} });
+			Edge e3(2, { n2, {} }, { n5, {} });
+			Edge e4(2, { n3, {} }, { n4, {} });
+
+			Node n6(6, true, "state", {});
+			Node n7(7, true, "state", {});
+			Node n8(8, true, "state", {});
+			Node n9(9, true, "if", {});
+			Node n10(10, true, "if", {});
+			Edge e5(4, { n6, {} }, { n9, {} });
+			Edge e6(4, { n7, {} }, { n10, {} });
+			Edge e7(4, { n6, {} }, { n9, {} });
+			Edge e8(4, { n8, {} }, { n10, {} });
+
+			auto [is_ok, edge_map, node_map] = is_node_matched({ e1, e2, e3, e4 }, { e5, e6, e7, e8 });
+			Assert::IsTrue(!is_ok);
+		}
+		TEST_METHOD(test_for_matched_by_order) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Node n3(3, true, "state", {});
+			Edge e1(1, { n1, {} }, { n2, {} });
+			Edge e2(2, { n1, {} }, { n3, {} });
+
+			Node n4(4, true, "state", {});
+			Node n5(5, true, "if", {});
+			Node n6(6, true, "state", {});
+			Edge e3(4, { n4, {} }, { n5, {} });
+			Edge e4(4, { n4, {} }, { n6, {} });
+
+			auto [is_ok, edge_map, node_map] = is_node_matched({ e1, e2 }, { e3, e4 });
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_map[4] == 1);
+			Assert::IsTrue(node_map[5] == 2);
+			Assert::IsTrue(node_map[6] == 3);
+		}
+		TEST_METHOD(test_for_matched_not_by_order) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Node n3(3, true, "state", {});
+			Edge e1(1, { n1, {} }, { n2, {} });
+			Edge e2(2, { n1, {} }, { n3, {} });
+
+			Node n4(4, true, "state", {});
+			Node n5(5, true, "if", {});
+			Node n6(6, true, "state", {});
+			Edge e3(4, { n4, {} }, { n5, {} });
+			Edge e4(4, { n4, {} }, { n6, {} });
+
+			auto [is_ok, edge_map, node_map] = is_node_matched({ e1, e2 }, { e4, e3 });
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_map[4] == 1);
+			Assert::IsTrue(node_map[5] == 2);
+			Assert::IsTrue(node_map[6] == 3);
+		}
+	};
+	TEST_CLASS(test_for_is_isolated_node_matched) {
+		TEST_METHOD(test_for_available_labels_not_enough) {
+			Node n1(1, true, "state", {}); 
+			Node n2(2, true, "state", {});
+			Node n3(3, true, "state", {});
+			auto [is_ok, node_map] = is_isolated_node_matched({ n1 }, { n2, n3 });
+			Assert::IsTrue(!is_ok);
+		}
+		TEST_METHOD(test_for_only_one_lable_with_one_node) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "state", {});
+			auto [is_ok, node_maps] = is_isolated_node_matched({ n1 }, { n2 });
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_maps.size() == 1);
+			Assert::IsTrue(node_maps[0][2] == 1);
+		}
+		TEST_METHOD(test_for_one_lable_with_multiple_nodes) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "state", {});
+			Node n3(3, true, "state", {});
+			auto [is_ok, node_maps] = is_isolated_node_matched({ n1, n3 }, { n2 });
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_maps.size() == 2);
+			Assert::IsTrue(node_maps[0][2] == 1);
+			Assert::IsTrue(node_maps[1][2] == 3);
+		}
+		TEST_METHOD(test_for_mutiple_labels_with_one_node) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Node n3(3, true, "state", {});
+			Node n4(4, true, "if", {});
+			auto [is_ok, node_maps] = is_isolated_node_matched({ n1, n2 }, { n3, n4 });
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_maps.size() == 1);
+			Assert::IsTrue(node_maps[0][3] == 1);
+			Assert::IsTrue(node_maps[0][4] == 2);
+
+		}
+		TEST_METHOD(test_for_mutiple_labels_with_mutiple_nodes) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Node n3(3, true, "if", {});
+			Node n4(4, true, "state", {});
+			Node n5(5, true, "if", {});
+			auto [is_ok, node_maps] = is_isolated_node_matched({ n1, n2, n3 }, { n4, n5 });
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_maps.size() == 2);
+		}
+	};
+	TEST_CLASS(test_for_handle_isolated_nodes) {
+		TEST_METHOD(test_for_simple_condition) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "state", {});
+			Node n3(3, true, "state", {});
+			std::unordered_map<int, int> m{ {5, 2} };
+			auto [is_ok, node_map] = handle_isolated_nodes({ n1, n2 }, { n3 }, m);
+			Assert::IsTrue(is_ok);
+			Assert::IsTrue(node_map.size() == 1);
+		}
+	};
 	TEST_CLASS(test_for_find_redex) {
-		TEST_METHOD(test_for_comb_edge) {
+		TEST_METHOD(test_for_comb_elem) {
 			Edge edge1(1, {}, {});
 			Edge edge2(2, {}, {});
 			Edge edge3(3, {}, {});
@@ -586,11 +822,80 @@ namespace graph_test {
 			Edge edge6(6, {}, {});
 			std::vector<Edge> edges{ edge1, edge2, edge3, edge4, edge5, edge6 };
 
-			auto comb_edges1 = comb_edge_or_node(edges, 6);
+			auto comb_edges1 = comb_elem(edges, 6);
 			Assert::IsTrue(comb_edges1.size() == 1);
 
-			auto comb_edges2 = comb_edge_or_node(edges, 5);
+			auto comb_edges2 = comb_elem(edges, 5);
 			Assert::IsTrue(comb_edges2.size() == 6);
+		}
+		TEST_METHOD(test_for_get_redex_by_matched) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Edge e1(1, { n1, {} }, { n2, {} });
+			Graph sub_graph({ n1, n2 }, { e1 });
+			std::unordered_map<int, int> edge_map{ {1, 2} };
+			std::unordered_map<int, int> node_map{ {1, 3}, {2, 4} };
+			auto redex = get_redex_by_matched(sub_graph, edge_map, node_map);
+			Assert::IsTrue(redex.edges[0].id == 2);
+			Assert::IsTrue(redex.edges[0].node1.first.id == 3);
+			Assert::IsTrue(redex.edges[0].node2.first.id == 4);
+			Assert::IsTrue(redex.nodes[0].id == 3);
+			Assert::IsTrue(redex.nodes[1].id == 4);
+		}
+		TEST_METHOD(test_for_with_no_edge) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "state", {});
+			Node n3(3, true, "state", {});
+
+			Graph g1({ n1, n2 }, {});
+			Graph g2({ n3 }, {});
+
+			auto redexes = find_redex(g1, g2);
+			Assert::IsTrue(redexes.size() == 2);
+			Assert::IsTrue(redexes[0].nodes[0].id == 1);
+			Assert::IsTrue(redexes[1].nodes[0].id == 2);
+		}
+		TEST_METHOD(test_for_with_no_isolated_node) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Node n3(3, true, "else", {});
+			Node n1231(121, true, "dfafds", {});
+			Edge e1(1, { n1, {} }, { n2, {} });
+			Edge e2(2, { n1, {} }, { n3, {} });
+			Edge e3(3, { n2, {} }, { n3, {} });
+			Edge e10(2131, { n1, {} }, { n1231, {} });
+			Graph g1({ n1, n2, n3, n1231 }, { e1, e2, e3, e10 });
+
+			Node n4(4, true, "state", {});
+			Node n5(5, true, "if", {});
+			Node n6(6, true, "else", {});
+			Edge e4(1, { n4, {} }, { n5, {} });
+			Edge e5(2, { n4, {} }, { n6, {} });
+			Edge e6(3, { n5, {} }, { n6, {} });
+			Graph g2({ n4, n5, n6 }, { e4, e5, e6 });
+			
+			auto redexes = find_redex(g1, g2);
+			
+			Assert::IsTrue(redexes.size() == 1);
+		}
+		TEST_METHOD(test_for_with_isolated_node) {
+			Node n1(1, true, "state", {});
+			Node n2(2, true, "if", {});
+			Node n3(3, true, "else", {});
+			Edge e1(1, { n1, {} }, { n2, {} });
+			Edge e2(2, { n1, {} }, { n3, {} });
+			Edge e3(3, { n2, {} }, { n3, {} });
+			Graph g1({ n1, n2, n3 }, { e1, e2, e3 });
+
+			Node n4(4, true, "state", {});
+			Node n5(5, true, "if", {});
+			Node n6(6, true, "else", {});
+			Edge e4(1, { n4, {} }, { n5, {} });
+			Graph g2({ n4, n5, n6 }, { e4});
+
+			auto redexes = find_redex(g1, g2);
+
+			Assert::IsTrue(redexes.size() == 1);
 		}
 	};
 }

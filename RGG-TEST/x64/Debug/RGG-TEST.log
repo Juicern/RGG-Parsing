@@ -1,6 +1,6 @@
-﻿  pch.cpp
+﻿  Scanning sources for module dependencies...
   RGG-TEST.cpp
-C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\Graph.cpp(58,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\Graph.cpp(276,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-TEST\RGG-TEST.cpp(589,23): error C3861: 'comb_edge_or_node': identifier not found
-C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-TEST\RGG-TEST.cpp(592,23): error C3861: 'comb_edge_or_node': identifier not found
+C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\Graph.cpp(59,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\Graph.cpp(324,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+     Creating library C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\x64\Debug\RGG-TEST.lib and object C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\x64\Debug\RGG-TEST.exp
+  RGG-TEST.vcxproj -> C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\x64\Debug\RGG-TEST.dll
