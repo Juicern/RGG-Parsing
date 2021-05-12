@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <regex>
 #include <iterator>
+#include <set>
 constexpr auto NOLABEL_CHAR = '-';
 constexpr auto NOLABEL_STR = "-";
 constexpr auto NOMARK = -1;
@@ -89,8 +90,12 @@ void delete_redex_edges(Graph&, const Graph&);
 void delete_redex_nodes(Graph&, const Graph&);
 void add_mark_on_edge(Graph&, const Graph&);
 void add_subgraph(Graph&, const Graph&);
+Graph modify_id_on_subgraph(const Graph&, const Graph&);
 void connect_nodes_on_dangle_edges(Graph&, const Graph&);
 inline void add_subgraph_nodes(Graph&, const Graph&);
 inline void add_subgraph_edges(Graph&, const Graph&);
 void remove_vertex_on_edges_and_nodes(Graph&);
 void reset_id_on_edges_and_nodes(Graph&);
+bool is_initial_graph(const Graph&);
+std::pair<bool, std::vector<Graph>> parse(const Graph&, const std::vector<Production>&);
+bool is_graph_available(const Graph&);

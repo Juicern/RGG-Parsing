@@ -25,5 +25,183 @@ graph TD
 10[join] --- 11[end]
 </div>
 <hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 2[if]
+1[fork] --- 4[assign]
+1[fork] --- 3[statement]
+2[if] --- 6[send]
+2[if] --- 5[send]
+5[send] --- 9[endif]
+5[send] --- 7[receive]
+3[statement] --- 7[receive]
+4[assign] --- 8[assign]
+6[send] --- 7[receive]
+6[send] --- 9[endif]
+9[endif] --- 10[join]
+7[receive] --- 10[join]
+8[assign] --- 10[join]
+10[join] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 2[if]
+1[fork] --- 4[statement]
+1[fork] --- 3[statement]
+2[if] --- 6[send]
+2[if] --- 5[send]
+5[send] --- 9[endif]
+5[send] --- 7[receive]
+3[statement] --- 7[receive]
+4[statement] --- 8[assign]
+6[send] --- 7[receive]
+6[send] --- 9[endif]
+9[endif] --- 10[join]
+7[receive] --- 10[join]
+8[assign] --- 10[join]
+10[join] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 2[if]
+1[fork] --- 4[statement]
+1[fork] --- 3[statement]
+2[if] --- 6[send]
+2[if] --- 5[send]
+5[send] --- 9[endif]
+5[send] --- 7[receive]
+3[statement] --- 7[receive]
+4[statement] --- 8[statement]
+6[send] --- 7[receive]
+6[send] --- 9[endif]
+9[endif] --- 10[join]
+7[receive] --- 10[join]
+8[statement] --- 10[join]
+10[join] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 2[if]
+1[fork] --- 4[statement]
+1[fork] --- 3[statement]
+2[if] --- 6[send]
+2[if] --- 5[statement]
+5[statement] --- 9[endif]
+3[statement] --- 7[receive]
+4[statement] --- 8[statement]
+6[send] --- 7[receive]
+6[send] --- 9[endif]
+9[endif] --- 10[join]
+7[receive] --- 10[join]
+8[statement] --- 10[join]
+10[join] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 2[if]
+1[fork] --- 4[statement]
+1[fork] --- 3[statement]
+2[if] --- 6[statement]
+2[if] --- 5[statement]
+5[statement] --- 9[endif]
+3[statement] --- 7[receive]
+4[statement] --- 8[statement]
+6[statement] --- 9[endif]
+9[endif] --- 10[join]
+7[receive] --- 10[join]
+8[statement] --- 10[join]
+10[join] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 2[statement]
+1[fork] --- 4[statement]
+1[fork] --- 3[statement]
+3[statement] --- 7[receive]
+4[statement] --- 8[statement]
+2[statement] --- 10[join]
+7[receive] --- 10[join]
+8[statement] --- 10[join]
+10[join] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 2[statement]
+1[fork] --- 4[statement]
+1[fork] --- 3[statement]
+3[statement] --- 5[statement]
+4[statement] --- 8[statement]
+2[statement] --- 10[join]
+5[statement] --- 10[join]
+8[statement] --- 10[join]
+10[join] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 2[statement]
+1[fork] --- 4[statement]
+1[fork] --- 3[statement]
+4[statement] --- 8[statement]
+2[statement] --- 10[join]
+3[statement] --- 10[join]
+8[statement] --- 10[join]
+10[join] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 4[statement]
+4[statement] --- 8[statement]
+8[statement] --- 3[join]
+3[join] --- 11[end]
+1[fork] --- 2[statement]
+2[statement] --- 3[join]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+1[fork] --- 4[statement]
+4[statement] --- 3[join]
+3[join] --- 11[end]
+1[fork] --- 2[statement]
+2[statement] --- 3[join]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[fork]
+3[join] --- 11[end]
+1[fork] --- 2[statement]
+2[statement] --- 3[join]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[start] --- 1[statement]
+1[statement] --- 11[end]
+</div>
+<hr/>
+<div class = "mermaid">
+graph TD
+0[¦Ë]
+</div>
+<hr/>
 </body>
 </html>

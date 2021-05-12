@@ -1,4 +1,5 @@
 #include "Graph.h"
+#include "show_graph.h"
 
 // Vertex
 Vertex::Vertex() noexcept : label(NOLABEL_CHAR), mark(NOMARK) {}
@@ -97,16 +98,16 @@ Graph get_redex_by_matched(const Graph& sub_graph,
 	for (auto& edge : redex.edges) {
 		edge.id = edge_map[edge.id];
 		edge.node1.first.id = node_map[edge.node1.first.id];
-		edge.node1.first.vertices = {};
-		edge.node1.second = {};
+		//edge.node1.first.vertices = {};
+		//edge.node1.second = {};
 		edge.node2.first.id = node_map[edge.node2.first.id];
-		edge.node2.first.vertices = {};
-		edge.node2.second = {};
+		//edge.node2.first.vertices = {};
+		//edge.node2.second = {};
 	}
 	// modify node
 	for (auto& node : redex.nodes) {
 		node.id = node_map[node.id];
-		node.vertices = {};
+		//node.vertices = {};
 	}
 	return redex;
 }
@@ -364,10 +365,19 @@ void get_isolated_matched_node_maps(std::unordered_map<std::string, std::vector<
 Graph replace_redex(const Graph& host_graph, 
 					const Graph& redex, 
 					const Graph& sub_graph) {
-	Graph temp = host_graph;
-	delete_redex(temp, redex);
-	add_subgraph(temp, sub_graph);
-	return temp;
+	try {
+		Graph temp = host_graph;
+		delete_redex(temp, redex);
+		add_subgraph(temp, sub_graph);
+		return temp;
+	}
+	catch (std::string s) {
+		throw s;
+	}
+	catch (...) {
+		throw "unknown error";
+	}
+	
 }
 
 std::vector<Graph> replace_redex(const Graph& host_graph, 
@@ -382,9 +392,18 @@ std::vector<Graph> replace_redex(const Graph& host_graph,
 
 void delete_redex(Graph& host_graph, 
 				  const Graph& redex) {
-	delete_redex_edges(host_graph, redex);
-	delete_redex_nodes(host_graph, redex);
-	add_mark_on_edge(host_graph, redex);
+	try {
+		delete_redex_edges(host_graph, redex);
+		delete_redex_nodes(host_graph, redex);
+		add_mark_on_edge(host_graph, redex);
+	}
+	catch (std::string s) {
+		throw s;
+	}
+	catch (...) {
+		throw "unknown error";
+	}
+	
 }
 
 void delete_redex_edges(Graph& host_graph, 
@@ -436,7 +455,11 @@ void add_mark_on_edge(Graph& host_graph,
 				auto it = std::find_if(redex_node.vertices.begin(), redex_node.vertices.end(),
 					[used_vertices](Vertex v) -> bool {return used_vertices.count(v.mark) == 0; });
 				//used_vertices.insert(it->mark);
+				if (it == redex_node.vertices.end()) {
+					throw "vertices is not enough";
+				}
 				host_edge.mark = it->mark; // mark this vertex for connecting
+				break;
 			}
 		}
 	}
@@ -444,11 +467,47 @@ void add_mark_on_edge(Graph& host_graph,
 
 void add_subgraph(Graph& host_graph, 
 				  const Graph& sub_graph) {
-	connect_nodes_on_dangle_edges(host_graph, sub_graph);
-	add_subgraph_nodes(host_graph, sub_graph);
-	add_subgraph_edges(host_graph, sub_graph);
+	auto new_sub_graph = modify_id_on_subgraph(host_graph, sub_graph);
+	add_subgraph_nodes(host_graph, new_sub_graph);
+	add_subgraph_edges(host_graph, new_sub_graph);
+	//reset_id_on_edges_and_nodes(host_graph);
+	connect_nodes_on_dangle_edges(host_graph, new_sub_graph);
 	remove_vertex_on_edges_and_nodes(host_graph);
-	reset_id_on_edges_and_nodes(host_graph);
+}
+
+Graph modify_id_on_subgraph(const Graph& host_graph, const Graph& sub_graph) {
+	Graph temp_graph(sub_graph);
+	std::unordered_map<int, int> node_map;
+	// modify node id
+	std::set<int> available_node_ids;
+	for (int i = 0; i < host_graph.nodes.size() + sub_graph.nodes.size(); ++i) {
+		available_node_ids.insert(i);
+	}
+	for (const auto& node : host_graph.nodes) {
+		available_node_ids.erase(node.id);
+	}
+	for (auto& node : temp_graph.nodes) {
+		auto p = available_node_ids.begin();
+		node_map[node.id] = *p;
+		node.id = *p;
+		available_node_ids.erase(p);
+	}
+	// modify edge id
+	std::set<int> available_edge_ids;
+	for (int i = 0; i < host_graph.edges.size() + sub_graph.edges.size(); ++i) {
+		available_edge_ids.insert(i);
+	}
+	for (const auto& edge : host_graph.edges) {
+		available_edge_ids.erase(edge.id);
+	}
+	for (auto& edge : temp_graph.edges) {
+		auto p = available_edge_ids.begin();
+		edge.id = *p;
+		edge.node1.first.id = node_map[edge.node1.first.id];
+		edge.node2.first.id = node_map[edge.node2.first.id];
+		available_edge_ids.erase(p);
+	}
+	return temp_graph;
 }
 
 void connect_nodes_on_dangle_edges(Graph& host_graph, 
@@ -466,11 +525,12 @@ void connect_nodes_on_dangle_edges(Graph& host_graph,
 	for (auto& host_edge : host_graph.edges) {
 		if (host_edge.mark != 0) {
 			if (host_edge.node1.first.id == -1) {
-				host_edge.node1 = vertex_mark2node[host_edge.node1.first.id];
+				host_edge.node1 = vertex_mark2node[host_edge.mark];
 			}
 			else if (host_edge.node2.first.id == -1) {
-				host_edge.node2 = vertex_mark2node[host_edge.node2.first.id];
+				host_edge.node2 = vertex_mark2node[host_edge.mark];
 			}
+			host_edge.mark = 0;
 		}
 	}
 }
@@ -507,3 +567,55 @@ void reset_id_on_edges_and_nodes(Graph& graph) {
 	}
 }
 
+bool is_initial_graph(const Graph& graph) {
+	return graph.edges.size() == 0 && graph.nodes.size() == 0;
+}
+
+std::pair<bool, std::vector<Graph>> parse(const Graph& host_graph, const std::vector<Production>& productions) {
+	try {
+		if (is_initial_graph(host_graph)) {
+			Node node(0, true, "¦Ë", {});
+			Graph initial_graph({ node }, {});
+			return { true, {initial_graph} };
+		}
+		for (int i = 0; i < productions.size(); ++i) {
+			auto production = productions[i];
+			auto redexes = find_redex(host_graph, production.r_graph);
+			if (i == 0 && redexes.size() != 0) {
+				if (redexes.size() != 1 || redexes[0].edges.size() != host_graph.edges.size() || redexes[0].nodes.size() != host_graph.nodes.size()) {
+					continue;
+				}
+			}
+			for (const auto& redex : redexes) {
+				auto new_graph = replace_redex(host_graph, redex, production.l_graph);
+				if (!is_graph_available(new_graph)) return { false, {} };
+				//draw_process_in_html({ host_graph, new_graph });
+				//show_process();
+				auto [is_ok, processes] = parse(new_graph, productions);
+				if (is_ok) {
+					processes.insert(processes.begin(), host_graph);
+					return{ true, processes };
+				}
+			}
+		}
+		return { false, {} };
+	}
+	catch(...)  {
+		return { false, {} };
+	}
+	
+}
+
+bool is_graph_available(const Graph& graph) {
+	// cannot exist multiple same edges
+	std::unordered_map<int, int> node2node;
+	for (const auto& edge : graph.edges) {
+		if ((node2node.count(edge.node1.first.id) && node2node[edge.node1.first.id] == edge.node2.first.id)
+			|| (node2node.count(edge.node2.first.id) && node2node[edge.node2.first.id] == edge.node1.first.id)) {
+			return false;
+		}
+		node2node[edge.node1.first.id] = edge.node2.first.id;
+		node2node[edge.node2.first.id] = edge.node1.first.id;
+	}
+	return true;
+}

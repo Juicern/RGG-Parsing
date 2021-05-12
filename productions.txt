@@ -169,6 +169,10 @@ EDGE
 0
 0 2
 1 0
+EDGE
+1
+1 0
+2 3
 GRAPH
 NODE
 0
@@ -308,7 +312,7 @@ GRAPH
 NODE
 0
 1
-statement
+send
 VERTEX
 T
 1

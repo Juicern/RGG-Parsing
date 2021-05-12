@@ -6,7 +6,7 @@ inline std::string get_host_graph_path() {
 }
 
 inline std::string get_production_path() {
-	return "../../../productions.txt";
+	return "../productions.txt";
 }
 Vertex generate_vertex(const std::string& s) {
 	/* s should be like: 
