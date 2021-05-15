@@ -1,13 +1,38 @@
+/*****************************************************************************
+***
+Copyright 2021 by Juicern(JuicernChu@outlook.com).
+All rights reserved.
+
+Permission to use, copy, modifyand distribute this software for personaland educational use is hereby granted without fee, provided that the above copyright notice appears in all copiesand that both that copyright noticeand this permission notice appear in supporting documentation, and that the names of Addison Wesley Longman or the author are not used in advertising or publicity pertaining to distribution of the software without specific, written prior permission.Addison Wesley Longmanand the author make no representations about the suitability of this software for any purpose.It is provided "as is" without express or implied warranty.
+
+ADDISON WESLEY LONGMAN AND THE AUTHOR DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.IN NO EVENT SHALL ADDISON WESLEY LONGMAN OR THE AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+***
+******************************************************************************/
+
 #pragma once
 #include "read_graph.h"
 
+/// <summary>
+/// get host graph.txt local path
+/// </summary>
+/// <returns></returns>
 inline std::string get_host_graph_path() {
 	return "../host_graph.txt";
 }
 
-inline std::string get_production_path() {
+/// <summary>
+/// get productions.txt local path
+/// </summary>
+/// <returns></returns>
+inline std::string get_productions_path() {
 	return "../productions.txt";
 }
+
+/// <summary>
+/// get a vertex from string
+/// </summary>
+/// <param name="s"></param>
+/// <returns></returns>
 Vertex generate_vertex(const std::string& s) {
 	/* s should be like: 
         T
@@ -16,6 +41,12 @@ Vertex generate_vertex(const std::string& s) {
     auto strs = split(s, "\n");
     return Vertex(strs[0][0], std::stoi(strs[1]));
 }
+
+/// <summary>
+/// get a node from string
+/// </summary>
+/// <param name="s"></param>
+/// <returns></returns>
 Node generate_node(const std::string& s) {
     /* s should be like:
         2
@@ -52,6 +83,13 @@ Node generate_node(const std::string& s) {
     }
     return Node(id, is_terminal, label, vertices);
 }
+
+/// <summary>
+/// get a edge from string
+/// </summary>
+/// <param name="s"></param>
+/// <param name="nodes"></param>
+/// <returns></returns>
 Edge generate_edge(const std::string& s, const std::vector<Node>& nodes) {
     /* s should be like:
     1
@@ -93,6 +131,12 @@ Edge generate_edge(const std::string& s, const std::vector<Node>& nodes) {
     }
     return Edge(id, node1, node2);
 }
+
+/// <summary>
+/// get a graph from string
+/// </summary>
+/// <param name="s"></param>
+/// <returns></returns>
 Graph generate_graph(const std::string& s) {
     /* s should be like:
         NODE
@@ -116,10 +160,21 @@ Graph generate_graph(const std::string& s) {
     }
     return Graph(nodes, edges);
 }
+
+/// <summary>
+/// get a production from string
+/// </summary>
+/// <param name="s"></param>
+/// <returns></returns>
 Production generate_production(const std::string& s) {
     auto strs = split(s, GRAPH_SPLIT);
     return Production(generate_graph(strs[0]), generate_graph(strs[1]));
 }
+
+/// <summary>
+/// get host graph
+/// </summary>
+/// <returns></returns>
 Graph read_host_graph() {
     std::ifstream in(get_host_graph_path());
     std::istreambuf_iterator<char> begin(in);
@@ -128,8 +183,13 @@ Graph read_host_graph() {
     in.close();
     return generate_graph(s);
 }
+
+/// <summary>
+/// get productions
+/// </summary>
+/// <returns></returns>
 std::vector<Production> read_productions() {
-    std::ifstream in(get_production_path());
+    std::ifstream in(get_productions_path());
     std::istreambuf_iterator<char> begin(in);
     std::istreambuf_iterator<char> end;
     std::string s(begin, end);
@@ -141,6 +201,12 @@ std::vector<Production> read_productions() {
     return productions;
 }
 
+/// <summary>
+/// split a string by given separator
+/// </summary>
+/// <param name="in">string</param>
+/// <param name="delim">separator</param>
+/// <returns>splited strings</returns>
 std::vector<std::string> split(const std::string& in, const std::string& delim) {
     std::regex re{ delim };
     std::vector<std::string> ret {std::sregex_token_iterator(in.begin(), in.end(), re, -1), std::sregex_token_iterator()};

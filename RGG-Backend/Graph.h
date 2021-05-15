@@ -1,3 +1,14 @@
+/*****************************************************************************
+***
+Copyright 2021 by Juicern(JuicernChu@outlook.com).
+All rights reserved.
+
+Permission to use, copy, modifyand distribute this software for personaland educational use is hereby granted without fee, provided that the above copyright notice appears in all copiesand that both that copyright noticeand this permission notice appear in supporting documentation, and that the names of Addison Wesley Longman or the author are not used in advertising or publicity pertaining to distribution of the software without specific, written prior permission.Addison Wesley Longmanand the author make no representations about the suitability of this software for any purpose.It is provided "as is" without express or implied warranty.
+
+ADDISON WESLEY LONGMAN AND THE AUTHOR DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.IN NO EVENT SHALL ADDISON WESLEY LONGMAN OR THE AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+***
+******************************************************************************/
+
 #pragma once
 #include <vector>
 #include <string>
@@ -83,7 +94,6 @@ std::unordered_map<std::string, int> get_lable_count(const std::vector<Edge>&);
 std::pair<bool, std::vector<std::unordered_map<int, int>>> handle_isolated_nodes(const std::vector<Node>&, const std::vector<Node>&, const std::unordered_map<int, int>&);
 std::pair<bool, std::vector<std::unordered_map<int, int>>> is_isolated_node_matched(const std::vector<Node>&, const std::vector<Node>&);
 void get_isolated_matched_node_maps(std::unordered_map<std::string, std::vector<std::vector<Node>>>&, std::unordered_set<std::string>&, std::unordered_map<std::string, std::vector<Node>>&, std::unordered_map<int, int>&, std::vector<std::unordered_map<int, int>>&);
-std::vector<Graph> replace_redex(const Graph&, const std::vector<Graph>&, const Graph&);
 Graph replace_redex(const Graph&, const Graph&, const Graph&);
 void delete_redex(Graph&, const Graph&);
 void delete_redex_edges(Graph&, const Graph&);
@@ -95,7 +105,6 @@ void connect_nodes_on_dangle_edges(Graph&, const Graph&);
 inline void add_subgraph_nodes(Graph&, const Graph&);
 inline void add_subgraph_edges(Graph&, const Graph&);
 void remove_vertex_on_edges_and_nodes(Graph&);
-void reset_id_on_edges_and_nodes(Graph&);
-bool is_initial_graph(const Graph&);
+inline bool is_initial_graph(const Graph&);
 std::pair<bool, std::vector<Graph>> parse(const Graph&, const std::vector<Production>&);
 bool is_graph_available(const Graph&);

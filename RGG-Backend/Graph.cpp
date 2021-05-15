@@ -1,3 +1,15 @@
+/*****************************************************************************
+***
+Copyright 2021 by Juicern(JuicernChu@outlook.com).
+All rights reserved.
+
+Permission to use, copy, modifyand distribute this software for personaland educational use is hereby granted without fee, provided that the above copyright notice appears in all copiesand that both that copyright noticeand this permission notice appear in supporting documentation, and that the names of Addison Wesley Longman or the author are not used in advertising or publicity pertaining to distribution of the software without specific, written prior permission.Addison Wesley Longmanand the author make no representations about the suitability of this software for any purpose.It is provided "as is" without express or implied warranty.
+
+ADDISON WESLEY LONGMAN AND THE AUTHOR DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.IN NO EVENT SHALL ADDISON WESLEY LONGMAN OR THE AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+***
+******************************************************************************/
+
+#pragma once
 #include "Graph.h"
 #include "show_graph.h"
 
@@ -5,72 +17,58 @@
 Vertex::Vertex() noexcept : label(NOLABEL_CHAR), mark(NOMARK) {}
 Vertex::Vertex(const char& _label, const int& _mark) : label(_label), mark(_mark) {}
 Vertex::Vertex(const Vertex& _vertex) : label(_vertex.label), mark(_vertex.mark) {}
-bool Vertex::operator ==(const Vertex& v)
-{
-	return this->label == v.label;
-}
+bool Vertex::operator ==(const Vertex& v){return this->label == v.label;}
 
 // Node
 Node::Node() noexcept : id(NOID), is_terminal(false), label(NOLABEL_STR) {}
-Node::Node(const int& _id, const bool& _is_terminal, const std::string& _label, const std::vector<Vertex>& _vertices) : id(_id), is_terminal(_is_terminal), label(_label) {
-	vertices.assign(_vertices.begin(), _vertices.end());
-}
-Node::Node(const Node& _node) : id(_node.id), is_terminal(_node.is_terminal), label(_node.label) {
-	vertices.assign(_node.vertices.begin(), _node.vertices.end());
-}
-bool Node::operator ==(const Node& n) {
-	return this->id == n.id;
-}
+Node::Node(const int& _id, const bool& _is_terminal, const std::string& _label, const std::vector<Vertex>& _vertices) : id(_id), is_terminal(_is_terminal), label(_label), vertices(_vertices.begin(), _vertices.end()) {}
+Node::Node(const Node& _node) : id(_node.id), is_terminal(_node.is_terminal), label(_node.label), vertices(_node.vertices.begin(), _node.vertices.end()) {}
+bool Node::operator ==(const Node& n) {return this->id == n.id;}
 
 // Edge
 Edge::Edge() noexcept : id(NOID), mark(NOMARK){}
-Edge::Edge(const int& _id, const std::pair<Node, Vertex>& _node1, const std::pair<Node, Vertex>& _node2) : id(_id), mark(0) {
-	node1.first = _node1.first;
-	node1.second = _node1.second;
-	node2.first = _node2.first;
-	node2.second = _node2.second;
-}
-Edge::Edge(const Edge& _edge) : id(_edge.id), mark(_edge.mark) {
-	node1.first = _edge.node1.first;
-	node1.second = _edge.node1.second;
-	node2.first = _edge.node2.first;
-	node2.second = _edge.node2.second;
-}
-bool Edge::operator ==(const Edge& e) {
-	return this->id == e.id;
-}
+Edge::Edge(const int& _id, const std::pair<Node, Vertex>& _node1, const std::pair<Node, Vertex>& _node2) : id(_id), mark(0), node1(_node1), node2(_node2) {}
+Edge::Edge(const Edge& _edge) : id(_edge.id), mark(_edge.mark), node1(_edge.node1), node2(_edge.node2) {}
+bool Edge::operator ==(const Edge& e) {return this->id == e.id;}
 
 
 
 // Graph
-Graph::Graph(const Graph & _graph) {
-	nodes.assign(_graph.nodes.begin(), _graph.nodes.end());
-	edges.assign(_graph.edges.begin(), _graph.edges.end());
-}
+Graph::Graph(const Graph & _graph): nodes(_graph.nodes), edges(_graph.edges) {}
 Graph::Graph(const std::vector<Node>&_nodes, const std::vector<Edge>&_edges) : nodes(_nodes), edges(_edges) {}
 
 // Production
 Production::Production(const Graph& _l_graph, const Graph& _r_graph) : l_graph(_l_graph), r_graph(_r_graph) {}
 
-
-// find the redex
+/// <summary>
+/// find redexes(part of host graph) which is isomorphic to the subgraph
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="sub_graph">subgraph</param>
+/// <returns>multiple redexes</returns>
 std::vector<Graph> find_redex(const Graph& host_graph, 
 							  const Graph& sub_graph) {
 	std::vector<Graph> redexes;
+	// take n edges from host_graph.edges (n is the count of sub_graph.edges)
 	auto comb_edges = comb_elem(host_graph.edges, sub_graph.edges.size());
+	// traverse all combinations to find redex
 	for (const auto& comb_elem : comb_edges) {
+		// judge if this combination is a redex, node and edge map which mapping subgraph node/edge id to host graph node/edge id
 		auto [is_ok, sub_edge2host_edge, sub_node2host_node] = is_node_matched(comb_elem, sub_graph.edges);
 		if (is_ok) {
 			// if there are isolated nodes
 			if (sub_node2host_node.size() != sub_graph.nodes.size()) {
+				// judege if any part of rest host graph(substract the redex) can be isomorphic to these isolated nodes
+				// and get the node map which mapping isolated node id to host graph node id
 				auto [flag, isolated_id2host_ids] = handle_isolated_nodes(host_graph.nodes, sub_graph.nodes, sub_node2host_node);
 				if (!flag) continue;
 				for (const auto& isolated_id2host_id : isolated_id2host_ids) {
-					// merge two map
+					// merge two maps
 					for (const auto& [key, value] : isolated_id2host_id) {
 						sub_node2host_node[key] = value;
 					}
 					redexes.emplace_back(get_redex_by_matched(sub_graph, sub_edge2host_edge, sub_node2host_node));
+					// recover
 					for (const auto& [key, value] : isolated_id2host_id) {
 						sub_node2host_node.erase(key);
 					}
@@ -83,6 +81,7 @@ std::vector<Graph> find_redex(const Graph& host_graph,
 	}
 	return redexes;
 }
+
 /// <summary>
 /// get a redex by using matched edges and nodes 
 /// </summary>
@@ -98,19 +97,15 @@ Graph get_redex_by_matched(const Graph& sub_graph,
 	for (auto& edge : redex.edges) {
 		edge.id = edge_map[edge.id];
 		edge.node1.first.id = node_map[edge.node1.first.id];
-		//edge.node1.first.vertices = {};
-		//edge.node1.second = {};
 		edge.node2.first.id = node_map[edge.node2.first.id];
-		//edge.node2.first.vertices = {};
-		//edge.node2.second = {};
 	}
 	// modify node
 	for (auto& node : redex.nodes) {
 		node.id = node_map[node.id];
-		//node.vertices = {};
 	}
 	return redex;
 }
+
 /// <summary>
 /// Implement combination (take n elements from host_elems, with no order)
 /// </summary>
@@ -123,9 +118,11 @@ std::vector<std::vector<T>> comb_elem(const std::vector<T>& host_elems,
 									  int n) {
 	std::vector<std::vector<T>> comb_elems;
 	std::vector<T> cur_elems;
+	// get combinations recursively
 	comb_elem<T>(host_elems, n, 0, comb_elems, cur_elems);
 	return comb_elems;
 }
+
 /// <summary>
 /// recursive version of comb_elem (call by non-recursive version)
 /// </summary>
@@ -142,15 +139,20 @@ void comb_elem(const std::vector<T>& host_elems,
 			   std::vector<std::vector<T>>& comb_elems, 
 			   std::vector<T>& cur_elems) {
 	if (n == 0) {
+		// add current combination to combinations
 		comb_elems.emplace_back(cur_elems);
 		return;
 	}
+	// not enough elements to form a combination
 	if (host_elems.size() - index < n) {
 		return;
 	}
+	// traverse:
+	// 1. put current element into combination
 	cur_elems.emplace_back(host_elems[index]);
 	comb_elem(host_elems, n - 1, index + 1, comb_elems, cur_elems);
 	cur_elems.pop_back();
+	// 2. not put
 	comb_elem(host_elems, n, index + 1, comb_elems, cur_elems);
 }
 
@@ -162,7 +164,7 @@ void comb_elem(const std::vector<T>& host_elems,
 /// <returns>is matched, a map subgraph edge id mapping to host graph edge id, a map subgraph node id mapping to host graph node id</returns>
 std::tuple<bool, std::unordered_map<int, int>, std::unordered_map<int, int>> is_node_matched(const std::vector<Edge>& host_edges, 
 																							 const std::vector<Edge>& sub_edges) {
-	// 1. if their lable is same, the label count should be the same
+	// if their lable is same, the label count should be the same. Otherwise return false
 	auto host_lable_count = get_lable_count(host_edges);
 	auto sub_lable_count = get_lable_count(sub_edges);
 	for (const auto& [key, value] : host_lable_count) {
@@ -170,7 +172,7 @@ std::tuple<bool, std::unordered_map<int, int>, std::unordered_map<int, int>> is_
 			return { false, {}, {} };
 		}
 	}
-	// 2. check the match
+	// traverse all the permunation, find if node is one to one matched by order
 	std::vector<Edge> temp_edges(host_edges.begin(), host_edges.end());
 	std::sort(temp_edges.begin(), temp_edges.end(), [](const Edge& edge1, const Edge& edge2) {return edge1.id < edge2.id; });
 	do {
@@ -185,6 +187,7 @@ std::tuple<bool, std::unordered_map<int, int>, std::unordered_map<int, int>> is_
 	} while (next_permutation(temp_edges.begin(), temp_edges.end(), [](const Edge& edge1, const Edge& edge2) { return edge1.id < edge2.id; }));
 	return { false, {}, {} };
 }
+
 /// <summary>
 /// judge if the nodes can be one to one matched by order
 /// </summary>
@@ -196,6 +199,7 @@ std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Ed
 	std::unordered_map<int, int> sub_node2host_node;
 	return is_one_to_one(host_edges, sub_edges, 0, sub_node2host_node);
 }
+
 /// <summary>
 /// recursive version of is_one_to_one (call by non_recursive version)
 /// </summary>
@@ -211,12 +215,14 @@ std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Ed
 	if (index == host_edges.size()) {
 		return { true, sub_node2host_node };
 	}
+	// judge if the record is same to the old
 	auto is_same_to_old_record = [](std::unordered_map<int, int>& m, int id1, int id2) {
 		if (m.count(id1) == 0 || m[id1] == id2) {
 			return true;
 		}
 		return false;
 	};
+	// get to next recursion if the node lable is matched and the record is not diffrent to the old record
 	if (host_edges[index].node1.first.label == sub_edges[index].node1.first.label && host_edges[index].node2.first.label == sub_edges[index].node2.first.label) {
 		if (is_same_to_old_record(sub_node2host_node, sub_edges[index].node1.first.id, host_edges[index].node1.first.id)
 			&& is_same_to_old_record(sub_node2host_node, sub_edges[index].node2.first.id, host_edges[index].node2.first.id)) {
@@ -245,6 +251,7 @@ std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Ed
 	}
 	return { false, {} };
 }
+
 /// <summary>
 /// get the amount of each node label
 /// </summary>
@@ -276,22 +283,23 @@ std::unordered_map<std::string, int> get_lable_count(const std::vector<Edge>& ed
 std::pair<bool, std::vector<std::unordered_map<int, int>>> handle_isolated_nodes(const std::vector<Node>& host_nodes, 
 																			     const std::vector<Node>& sub_nodes, 
 																				 const std::unordered_map<int, int>& sub_node2host_node) {
+	// remove used host graph nodes(in redex)
+	auto available_host_nodes(host_nodes);
 	std::unordered_set<int> used_host_nodes;
 	for (const auto& [_, id] : sub_node2host_node) {
 		used_host_nodes.insert(id);
 	}
-	auto available_host_nodes(host_nodes);
 	available_host_nodes.erase(
 		std::remove_if(available_host_nodes.begin(), available_host_nodes.end(), 
 			[used_host_nodes](Node node) {return used_host_nodes.count(node.id) != 0; }), 
 		available_host_nodes.end());
-
+	// remove used subgraph nodes(in redex)
 	auto isolated_nodes(sub_nodes);
 	isolated_nodes.erase(
 		std::remove_if(isolated_nodes.begin(), isolated_nodes.end(),
 			[sub_node2host_node](Node node) {return sub_node2host_node.count(node.id) != 0; }),
 		isolated_nodes.end());
-
+	
 	auto [is_ok, isoalated_node2host_node] = is_isolated_node_matched(available_host_nodes, isolated_nodes);
 	return is_isolated_node_matched(available_host_nodes, isolated_nodes);
 }
@@ -362,50 +370,39 @@ void get_isolated_matched_node_maps(std::unordered_map<std::string, std::vector<
 	available_labels.insert(cur_label);
 }
 
+/// <summary>
+/// replace the redex in host graph by sub graph
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="redex">redex</param>
+/// <param name="sub_graph">sub graph</param>
+/// <returns>replaced graph</returns>
 Graph replace_redex(const Graph& host_graph, 
 					const Graph& redex, 
 					const Graph& sub_graph) {
-	try {
-		Graph temp = host_graph;
-		delete_redex(temp, redex);
-		add_subgraph(temp, sub_graph);
-		return temp;
-	}
-	catch (std::string s) {
-		throw s;
-	}
-	catch (...) {
-		throw "unknown error";
-	}
-	
+	Graph temp(host_graph);
+	delete_redex(temp, redex);
+	add_subgraph(temp, sub_graph);
+	return temp;
 }
 
-std::vector<Graph> replace_redex(const Graph& host_graph, 
-								 const std::vector<Graph>& redexes, 
-								 const Graph& sub_graph) {
-	std::vector<Graph> graphs;
-	for (auto& redex : redexes) {
-		graphs.push_back(replace_redex(host_graph, redex, sub_graph));
-	}
-	return graphs;
-}
-
+/// <summary>
+/// delete the redex in host graph, and modify the dangle edge mark
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="redex">redex</param>
 void delete_redex(Graph& host_graph, 
 				  const Graph& redex) {
-	try {
-		delete_redex_edges(host_graph, redex);
-		delete_redex_nodes(host_graph, redex);
-		add_mark_on_edge(host_graph, redex);
-	}
-	catch (std::string s) {
-		throw s;
-	}
-	catch (...) {
-		throw "unknown error";
-	}
-	
+	delete_redex_edges(host_graph, redex);
+	delete_redex_nodes(host_graph, redex);
+	add_mark_on_edge(host_graph, redex);
 }
 
+/// <summary>
+/// delete the redex edges in host graph edges
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="redex">redex</param>
 void delete_redex_edges(Graph& host_graph, 
 						const Graph& redex) {
 	std::unordered_set<int> edges_set;
@@ -418,9 +415,13 @@ void delete_redex_edges(Graph& host_graph,
 		host_graph.edges.end());
 }
 
+/// <summary>
+/// delete redex nodes in host graph nodes
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="redex">redex</param>
 void delete_redex_nodes(Graph& host_graph, 
 						const Graph& redex) {
-	// delete node
 	std::unordered_set<int> nodes_set;
 	for (const auto& node : redex.nodes) {
 		nodes_set.insert(node.id);
@@ -431,14 +432,19 @@ void delete_redex_nodes(Graph& host_graph,
 		host_graph.nodes.end());
 }
 
+/// <summary>
+/// add mark on dangle edge(mark is assigned to the connected vertex mark), and change id on edge's node
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="redex">redex</param>
 void add_mark_on_edge(Graph& host_graph, 
 					  const Graph& redex) {
-	// add mark on edge and change id on edge's node
 	std::unordered_set<int> used_vertices{0};
 	for (const auto& edge : redex.edges) {
 		used_vertices.insert(edge.node1.second.mark);
 		used_vertices.insert(edge.node2.second.mark);
 	}
+	// add mark on dangle edge and change id on edge's node (mark is assigned to the connected vertex mark)
 	for (auto& host_edge : host_graph.edges) {
 		for (const auto& redex_node : redex.nodes) {
 			bool is_dangle = false;
@@ -454,10 +460,6 @@ void add_mark_on_edge(Graph& host_graph,
 				// find a vertex not be used before
 				auto it = std::find_if(redex_node.vertices.begin(), redex_node.vertices.end(),
 					[used_vertices](Vertex v) -> bool {return used_vertices.count(v.mark) == 0; });
-				//used_vertices.insert(it->mark);
-				if (it == redex_node.vertices.end()) {
-					throw "vertices is not enough";
-				}
 				host_edge.mark = it->mark; // mark this vertex for connecting
 				break;
 			}
@@ -465,16 +467,26 @@ void add_mark_on_edge(Graph& host_graph,
 	}
 }
 
+/// <summary>
+/// 
+/// </summary>
+/// <param name="host_graph"></param>
+/// <param name="sub_graph"></param>
 void add_subgraph(Graph& host_graph, 
 				  const Graph& sub_graph) {
 	auto new_sub_graph = modify_id_on_subgraph(host_graph, sub_graph);
 	add_subgraph_nodes(host_graph, new_sub_graph);
 	add_subgraph_edges(host_graph, new_sub_graph);
-	//reset_id_on_edges_and_nodes(host_graph);
 	connect_nodes_on_dangle_edges(host_graph, new_sub_graph);
 	remove_vertex_on_edges_and_nodes(host_graph);
 }
 
+/// <summary>
+/// modify the id in subgraph, such that host graph and sub graph will not have the same node/edge id
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="sub_graph">subgraph</param>
+/// <returns>the new subgraph</returns>
 Graph modify_id_on_subgraph(const Graph& host_graph, const Graph& sub_graph) {
 	Graph temp_graph(sub_graph);
 	std::unordered_map<int, int> node_map;
@@ -492,7 +504,7 @@ Graph modify_id_on_subgraph(const Graph& host_graph, const Graph& sub_graph) {
 		node.id = *p;
 		available_node_ids.erase(p);
 	}
-	// modify edge id
+	// modify edge id and edge's node id
 	std::set<int> available_edge_ids;
 	for (int i = 0; i < host_graph.edges.size() + sub_graph.edges.size(); ++i) {
 		available_edge_ids.insert(i);
@@ -510,6 +522,11 @@ Graph modify_id_on_subgraph(const Graph& host_graph, const Graph& sub_graph) {
 	return temp_graph;
 }
 
+/// <summary>
+/// connect subgraph nodes on host graph dangle edges, by dangle edge mark
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="sub_graph">subgraph</param>
 void connect_nodes_on_dangle_edges(Graph& host_graph, 
 								   const Graph& sub_graph) {
 	// put the marked vertex into map(mark == 0 means unmarked),
@@ -535,16 +552,30 @@ void connect_nodes_on_dangle_edges(Graph& host_graph,
 	}
 }
 
+/// <summary>
+/// add subgraph nodes to host graph nodes
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="sub_graph">subgraph</param>
 inline void add_subgraph_nodes(Graph& host_graph, 
 							   const Graph& sub_graph) {
 	host_graph.nodes.insert(host_graph.nodes.end(), sub_graph.nodes.begin(), sub_graph.nodes.end());
 }
 
+/// <summary>
+/// add subgraph edges to host graph
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="sub_graph">subgraph</param>
 inline void add_subgraph_edges(Graph& host_graph, 
 							   const Graph& sub_graph) {
 	host_graph.edges.insert(host_graph.edges.end(), sub_graph.edges.begin(), sub_graph.edges.end());
 }
 
+/// <summary>
+/// remove the vertices on edges and nodes, such that host graph is legal
+/// </summary>
+/// <param name="graph">graph</param>
 void remove_vertex_on_edges_and_nodes(Graph& graph) {
 	for (auto& edge : graph.edges) {
 		edge.node1.second = {};
@@ -556,60 +587,24 @@ void remove_vertex_on_edges_and_nodes(Graph& graph) {
 	}
 }
 
-void reset_id_on_edges_and_nodes(Graph& graph) {
-	int id = 0;
-	for (auto& edge : graph.edges) {
-		edge.id = id++;
-	}
-	id = 0;
-	for (auto& node : graph.nodes) {
-		node.id = id++;
-	}
-}
-
-bool is_initial_graph(const Graph& graph) {
+/// <summary>
+/// judge if the graph is initial graph by count its nodes and edges
+/// </summary>
+/// <param name="graph">graph</param>
+/// <returns>is initial graph</returns>
+inline bool is_initial_graph(const Graph& graph) {
 	return graph.edges.size() == 0 && graph.nodes.size() == 0;
 }
 
-std::pair<bool, std::vector<Graph>> parse(const Graph& host_graph, const std::vector<Production>& productions) {
-	try {
-		if (is_initial_graph(host_graph)) {
-			Node node(0, true, "¦Ë", {});
-			Graph initial_graph({ node }, {});
-			return { true, {initial_graph} };
-		}
-		for (int i = 0; i < productions.size(); ++i) {
-			auto production = productions[i];
-			auto redexes = find_redex(host_graph, production.r_graph);
-			if (i == 0 && redexes.size() != 0) {
-				if (redexes.size() != 1 || redexes[0].edges.size() != host_graph.edges.size() || redexes[0].nodes.size() != host_graph.nodes.size()) {
-					continue;
-				}
-			}
-			for (const auto& redex : redexes) {
-				auto new_graph = replace_redex(host_graph, redex, production.l_graph);
-				if (!is_graph_available(new_graph)) return { false, {} };
-				//draw_process_in_html({ host_graph, new_graph });
-				//show_process();
-				auto [is_ok, processes] = parse(new_graph, productions);
-				if (is_ok) {
-					processes.insert(processes.begin(), host_graph);
-					return{ true, processes };
-				}
-			}
-		}
-		return { false, {} };
-	}
-	catch(...)  {
-		return { false, {} };
-	}
-	
-}
-
+/// <summary>
+/// judge if graph is available. The graph is availble if it does not exist multiple edges
+/// </summary>
+/// <param name="graph">graph</param>
+/// <returns>is graph available</returns>
 bool is_graph_available(const Graph& graph) {
-	// cannot exist multiple same edges
 	std::unordered_map<int, int> node2node;
 	for (const auto& edge : graph.edges) {
+		// cannot exist multiple same edges
 		if ((node2node.count(edge.node1.first.id) && node2node[edge.node1.first.id] == edge.node2.first.id)
 			|| (node2node.count(edge.node2.first.id) && node2node[edge.node2.first.id] == edge.node1.first.id)) {
 			return false;
@@ -618,4 +613,43 @@ bool is_graph_available(const Graph& graph) {
 		node2node[edge.node2.first.id] = edge.node1.first.id;
 	}
 	return true;
+}
+
+/// <summary>
+/// judge if host graph can be parsed to initial graph by using productions to replace, and return process of change
+/// </summary>
+/// <param name="host_graph">host graph</param>
+/// <param name="productions">productions</param>
+/// <returns>can be parsed, parsing process</returns>
+std::pair<bool, std::vector<Graph>> parse(const Graph& host_graph, const std::vector<Production>& productions) {
+	if (is_initial_graph(host_graph)) {
+		Node node(0, true, "lambda", {});
+		Graph initial_graph({ node }, {});
+		return { true, {initial_graph} };
+	}
+	for (int i = 0; i < productions.size(); ++i) {
+		auto production = productions[i];
+		auto redexes = find_redex(host_graph, production.r_graph);
+		// the initial production can be used 
+		// if and only if host graph is already the right graph of initial production
+		if (i == 0 && redexes.size() != 0) {
+			if (redexes.size() != 1 || redexes[0].edges.size() != host_graph.edges.size() || redexes[0].nodes.size() != host_graph.nodes.size()) {
+				continue;
+			}
+		}
+		// try all redexes
+		for (const auto& redex : redexes) {
+			auto new_graph = replace_redex(host_graph, redex, production.l_graph);
+			if (!is_graph_available(new_graph)) return { false, {} };
+			// FOR DEBUGGING
+			//draw_process_in_html({ host_graph, new_graph });
+			//show_process();
+			auto [is_ok, process] = parse(new_graph, productions);
+			if (is_ok) {
+				process.insert(process.begin(), host_graph);
+				return{ true, process };
+			}
+		}
+	}
+	return { false, {} };
 }

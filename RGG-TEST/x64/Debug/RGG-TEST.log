@@ -1,5 +1,6 @@
-﻿  Scanning sources for module dependencies...
+﻿  pch.cpp
   RGG-TEST.cpp
-C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\Graph.cpp(60,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\Graph.cpp(325,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\Graph.cpp(53,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\Graph.cpp(333,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+     Creating library C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\x64\Debug\RGG-TEST.lib and object C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\x64\Debug\RGG-TEST.exp
   RGG-TEST.vcxproj -> C:\Users\RickyChu\OneDrive - HHU\RGG\RGG-Backend\x64\Debug\RGG-TEST.dll
