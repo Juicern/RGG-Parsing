@@ -55,15 +55,15 @@ std::string draw_graph_in_div(const Graph& graph) {
 		isolated_nodes[node.id] = node;
 	}
 	for (const auto& edge : graph.edges) {
-		if (isolated_nodes.count(edge.node1.first.id)) {
-			isolated_nodes.erase(edge.node1.first.id);
+		if (isolated_nodes.count(edge.point1.first.id)) {
+			isolated_nodes.erase(edge.point1.first.id);
 		}
-		if (isolated_nodes.count(edge.node2.first.id)) {
-			isolated_nodes.erase(edge.node2.first.id);
+		if (isolated_nodes.count(edge.point2.first.id)) {
+			isolated_nodes.erase(edge.point2.first.id);
 		}
-		div += std::to_string(edge.node1.first.id) + "[" + edge.node1.first.label + "]";
+		div += std::to_string(edge.point1.first.id) + "[" + edge.point1.first.label + "]";
 		div += " --- ";
-		div += std::to_string(edge.node2.first.id) + "[" + edge.node2.first.label + "]";
+		div += std::to_string(edge.point2.first.id) + "[" + edge.point2.first.label + "]";
 		div += "\n";
 	}
 	for (const auto& [id, node] : isolated_nodes) {

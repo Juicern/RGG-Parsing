@@ -104,10 +104,10 @@ namespace graph_test {
 			Edge e(1, { n1, v1 }, { n2, v4 });
 
 			Assert::AreEqual(e.id, 1);
-			Assert::IsTrue(e.node1.first == n1);
-			Assert::IsTrue(e.node1.second == v1);
-			Assert::IsTrue(e.node2.first == n2);
-			Assert::IsTrue(e.node2.second == v4);
+			Assert::IsTrue(e.point1.first == n1);
+			Assert::IsTrue(e.point1.second == v1);
+			Assert::IsTrue(e.point2.first == n2);
+			Assert::IsTrue(e.point2.second == v4);
 		}
 		TEST_METHOD(test_for_copy_constructor) {
 			Vertex v1('R', 1);
@@ -125,10 +125,10 @@ namespace graph_test {
 			auto e2 = make_shared<Edge>(*e1);
 
 			Assert::AreEqual(e1->id, 1);
-			Assert::IsTrue(e1->node1.first == e2->node1.first);
-			Assert::IsTrue(e1->node1.second == e2->node1.second);
-			Assert::IsTrue(e1->node2.first == e2->node2.first);
-			Assert::IsTrue(e1->node2.second == e2->node2.second);
+			Assert::IsTrue(e1->point1.first == e2->point1.first);
+			Assert::IsTrue(e1->point1.second == e2->point1.second);
+			Assert::IsTrue(e1->point2.first == e2->point2.first);
+			Assert::IsTrue(e1->point2.second == e2->point2.second);
 			Assert::IsFalse(e1 == e2);
 		}
 		TEST_METHOD(test_for_operator_equals) {
@@ -367,8 +367,8 @@ namespace graph_test {
 
 			Assert::IsTrue(host_g.edges[0] == e1);
 			Assert::IsTrue(host_g.edges[1] == e2);
-			Assert::IsTrue(host_g.edges[0].node1.first.id == -1);
-			Assert::IsTrue(host_g.edges[1].node1.first.id == -1);
+			Assert::IsTrue(host_g.edges[0].point1.first.id == -1);
+			Assert::IsTrue(host_g.edges[1].point1.first.id == -1);
 
 			Assert::IsTrue(host_g.nodes[0] == n2);
 		}
@@ -404,7 +404,7 @@ namespace graph_test {
 
 			Assert::IsTrue(host_g.edges[0] == e1);
 			Assert::IsTrue(host_g.edges[1] == e3);
-			Assert::IsTrue(host_g.edges[1].node2.first.id == -1);
+			Assert::IsTrue(host_g.edges[1].point2.first.id == -1);
 
 			Assert::IsTrue(host_g.nodes[0] == n1);
 			Assert::IsTrue(host_g.nodes[1] == n2);
@@ -505,10 +505,10 @@ namespace graph_test {
 			auto edge = generate_edge(s, { n1, n2 });
 			Assert::IsTrue(edge.id == 1);
 			Assert::IsTrue(edge.mark == 0);
-			Assert::IsTrue(edge.node1.first == n1);
-			Assert::IsTrue(edge.node2.first == n2);
-			Assert::IsTrue(edge.node1.second.mark == NOMARK);
-			Assert::IsTrue(edge.node2.second.mark == NOMARK);
+			Assert::IsTrue(edge.point1.first == n1);
+			Assert::IsTrue(edge.point2.first == n2);
+			Assert::IsTrue(edge.point1.second.mark == NOMARK);
+			Assert::IsTrue(edge.point2.second.mark == NOMARK);
 		}
 		TEST_METHOD(test_for_generate_edge_with_Vertives) {
 			Node n1(2, false, "state", {Vertex('T', 2)});
@@ -517,10 +517,10 @@ namespace graph_test {
 			auto edge = generate_edge(s, { n1, n2 });
 			Assert::IsTrue(edge.id == 1);
 			Assert::IsTrue(edge.mark == 0);
-			Assert::IsTrue(edge.node1.first == n1);
-			Assert::IsTrue(edge.node2.first == n2);
-			Assert::IsTrue(edge.node1.second.mark == 2);
-			Assert::IsTrue(edge.node2.second.mark == 0);
+			Assert::IsTrue(edge.point1.first == n1);
+			Assert::IsTrue(edge.point2.first == n2);
+			Assert::IsTrue(edge.point1.second.mark == 2);
+			Assert::IsTrue(edge.point2.second.mark == 0);
 		}
 		TEST_METHOD(test_for_generate_graph) {
 			string s = "NODE\n";
@@ -534,10 +534,10 @@ namespace graph_test {
 			Assert::IsTrue(graph.edges.size() == 1);
 			Assert::IsTrue(graph.nodes[0].id == 2);
 			Assert::IsTrue(graph.nodes[1].id == 3);
-			Assert::IsTrue(graph.edges[0].node1.first.id = 2);
-			Assert::IsTrue(graph.edges[0].node2.first.id = 3);
-			Assert::IsTrue(graph.edges[0].node1.second.mark = 2);
-			Assert::IsTrue(graph.edges[0].node2.second.mark = 5);
+			Assert::IsTrue(graph.edges[0].point1.first.id = 2);
+			Assert::IsTrue(graph.edges[0].point2.first.id = 3);
+			Assert::IsTrue(graph.edges[0].point1.second.mark = 2);
+			Assert::IsTrue(graph.edges[0].point2.second.mark = 5);
 		}
 		TEST_METHOD(test_for_generate_production) {
 			string s;
@@ -565,19 +565,19 @@ namespace graph_test {
 			Assert::IsTrue(graph1.edges.size() == 1);
 			Assert::IsTrue(graph1.nodes[0].id == 2);
 			Assert::IsTrue(graph1.nodes[1].id == 3);
-			Assert::IsTrue(graph1.edges[0].node1.first.id = 2);
-			Assert::IsTrue(graph1.edges[0].node2.first.id = 3);
-			Assert::IsTrue(graph1.edges[0].node1.second.mark = 2);
-			Assert::IsTrue(graph1.edges[0].node2.second.mark = 5);
+			Assert::IsTrue(graph1.edges[0].point1.first.id = 2);
+			Assert::IsTrue(graph1.edges[0].point2.first.id = 3);
+			Assert::IsTrue(graph1.edges[0].point1.second.mark = 2);
+			Assert::IsTrue(graph1.edges[0].point2.second.mark = 5);
 
 			Assert::IsTrue(graph2.nodes.size() == 2);
 			Assert::IsTrue(graph2.edges.size() == 1);
 			Assert::IsTrue(graph2.nodes[0].id == 2);
 			Assert::IsTrue(graph2.nodes[1].id == 3);
-			Assert::IsTrue(graph2.edges[0].node1.first.id = 2);
-			Assert::IsTrue(graph2.edges[0].node2.first.id = 3);
-			Assert::IsTrue(graph2.edges[0].node1.second.mark = 2);
-			Assert::IsTrue(graph2.edges[0].node2.second.mark = 5);
+			Assert::IsTrue(graph2.edges[0].point1.first.id = 2);
+			Assert::IsTrue(graph2.edges[0].point2.first.id = 3);
+			Assert::IsTrue(graph2.edges[0].point1.second.mark = 2);
+			Assert::IsTrue(graph2.edges[0].point2.second.mark = 5);
 		}
 		TEST_METHOD(test_for_read_host_graph) {
 			//auto graph = read_host_graph();
@@ -849,8 +849,8 @@ namespace graph_test {
 			std::unordered_map<int, int> node_map{ {1, 3}, {2, 4} };
 			auto redex = get_redex_by_matched(sub_graph, edge_map, node_map);
 			Assert::IsTrue(redex.edges[0].id == 2);
-			Assert::IsTrue(redex.edges[0].node1.first.id == 3);
-			Assert::IsTrue(redex.edges[0].node2.first.id == 4);
+			Assert::IsTrue(redex.edges[0].point1.first.id == 3);
+			Assert::IsTrue(redex.edges[0].point2.first.id == 4);
 			Assert::IsTrue(redex.nodes[0].id == 3);
 			Assert::IsTrue(redex.nodes[1].id == 4);
 		}

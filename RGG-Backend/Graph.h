@@ -59,8 +59,8 @@ public:
 public:
 	int id;
 	int mark; // 0 means no delete node, while other values mean deleted node's vertex mark
-	std::pair<Node, Vertex> node1;
-	std::pair<Node, Vertex> node2;
+	std::pair<Node, Vertex> point1;
+	std::pair<Node, Vertex> point2;
 };
 
 class Graph {
@@ -106,5 +106,5 @@ inline void add_subgraph_nodes(Graph&, const Graph&);
 inline void add_subgraph_edges(Graph&, const Graph&);
 void remove_vertex_on_edges_and_nodes(Graph&);
 inline bool is_initial_graph(const Graph&);
-std::pair<bool, std::vector<Graph>> parse(const Graph&, const std::vector<Production>&);
+std::pair<bool, std::vector<Graph>> reduce(const Graph&, const std::vector<Production>&);
 bool is_graph_available(const Graph&);

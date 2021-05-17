@@ -97,8 +97,8 @@ Edge generate_edge(const std::string& s, const std::vector<Node>& nodes) {
     4 5
     */
     int id;
-    std::pair<Node, Vertex> node1;
-    std::pair<Node, Vertex> node2;
+    std::pair<Node, Vertex> point1;
+    std::pair<Node, Vertex> point2;
     std::unordered_map<int, Node> id2node;
     for (const auto& node : nodes) {
         id2node[node.id] = node;
@@ -108,28 +108,28 @@ Edge generate_edge(const std::string& s, const std::vector<Node>& nodes) {
     auto s_node1 = split(strs[1], " ");
     auto s_node2 = split(strs[2], " ");
     if (s_node1[1] == "-1") {
-        node1 = std::make_pair(id2node[std::stoi(s_node1[0])], Vertex());
+        point1 = std::make_pair(id2node[std::stoi(s_node1[0])], Vertex());
     }
     else {
         for (const auto& vertex : id2node[std::stoi(s_node1[0])].vertices) {
             if (vertex.mark == std::stoi(s_node1[1])) {
-                node1 = std::make_pair(id2node[std::stoi(s_node1[0])], vertex);
+                point1 = std::make_pair(id2node[std::stoi(s_node1[0])], vertex);
                 break;
             }
         }
     }
     if (s_node2[1] == "-1") {
-        node2 = std::make_pair(id2node[std::stoi(s_node2[0])], Vertex());
+        point2 = std::make_pair(id2node[std::stoi(s_node2[0])], Vertex());
     }
     else {
         for (const auto& vertex : id2node[std::stoi(s_node2[0])].vertices) {
             if (vertex.mark == std::stoi(s_node2[1])) {
-                node2 = std::make_pair(id2node[std::stoi(s_node2[0])], vertex);
+                point2 = std::make_pair(id2node[std::stoi(s_node2[0])], vertex);
                 break;
             }
         }
     }
-    return Edge(id, node1, node2);
+    return Edge(id, point1, point2);
 }
 
 /// <summary>

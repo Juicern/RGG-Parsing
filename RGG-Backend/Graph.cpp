@@ -27,8 +27,8 @@ bool Node::operator ==(const Node& n) {return this->id == n.id;}
 
 // Edge
 Edge::Edge() noexcept : id(NOID), mark(NOMARK){}
-Edge::Edge(const int& _id, const std::pair<Node, Vertex>& _node1, const std::pair<Node, Vertex>& _node2) : id(_id), mark(0), node1(_node1), node2(_node2) {}
-Edge::Edge(const Edge& _edge) : id(_edge.id), mark(_edge.mark), node1(_edge.node1), node2(_edge.node2) {}
+Edge::Edge(const int& _id, const std::pair<Node, Vertex>& _node1, const std::pair<Node, Vertex>& _node2) : id(_id), mark(0), point1(_node1), point2(_node2) {}
+Edge::Edge(const Edge& _edge) : id(_edge.id), mark(_edge.mark), point1(_edge.point1), point2(_edge.point2) {}
 bool Edge::operator ==(const Edge& e) {return this->id == e.id;}
 
 
@@ -96,8 +96,8 @@ Graph get_redex_by_matched(const Graph& sub_graph,
 	// modify edge
 	for (auto& edge : redex.edges) {
 		edge.id = edge_map[edge.id];
-		edge.node1.first.id = node_map[edge.node1.first.id];
-		edge.node2.first.id = node_map[edge.node2.first.id];
+		edge.point1.first.id = node_map[edge.point1.first.id];
+		edge.point2.first.id = node_map[edge.point2.first.id];
 	}
 	// modify node
 	for (auto& node : redex.nodes) {
@@ -223,30 +223,30 @@ std::pair<bool, std::unordered_map<int, int>> is_one_to_one(const std::vector<Ed
 		return false;
 	};
 	// get to next recursion if the node lable is matched and the record is not diffrent to the old record
-	if (host_edges[index].node1.first.label == sub_edges[index].node1.first.label && host_edges[index].node2.first.label == sub_edges[index].node2.first.label) {
-		if (is_same_to_old_record(sub_node2host_node, sub_edges[index].node1.first.id, host_edges[index].node1.first.id)
-			&& is_same_to_old_record(sub_node2host_node, sub_edges[index].node2.first.id, host_edges[index].node2.first.id)) {
-			sub_node2host_node[sub_edges[index].node1.first.id] = host_edges[index].node1.first.id;
-			sub_node2host_node[sub_edges[index].node2.first.id] = host_edges[index].node2.first.id;
+	if (host_edges[index].point1.first.label == sub_edges[index].point1.first.label && host_edges[index].point2.first.label == sub_edges[index].point2.first.label) {
+		if (is_same_to_old_record(sub_node2host_node, sub_edges[index].point1.first.id, host_edges[index].point1.first.id)
+			&& is_same_to_old_record(sub_node2host_node, sub_edges[index].point2.first.id, host_edges[index].point2.first.id)) {
+			sub_node2host_node[sub_edges[index].point1.first.id] = host_edges[index].point1.first.id;
+			sub_node2host_node[sub_edges[index].point2.first.id] = host_edges[index].point2.first.id;
 			auto [is_ok, m] = is_one_to_one(host_edges, sub_edges, index + 1, sub_node2host_node);
 			if (is_ok) {
 				return { true, m };
 			}
-			sub_node2host_node.erase(sub_edges[index].node1.first.id);
-			sub_node2host_node.erase(sub_edges[index].node2.first.id);
+			sub_node2host_node.erase(sub_edges[index].point1.first.id);
+			sub_node2host_node.erase(sub_edges[index].point2.first.id);
 		}
 	}
-	if (host_edges[index].node1.first.label == sub_edges[index].node2.first.label && host_edges[index].node2.first.label == sub_edges[index].node1.first.label) {
-		if (is_same_to_old_record(sub_node2host_node, sub_edges[index].node2.first.id, host_edges[index].node1.first.id)
-			&& is_same_to_old_record(sub_node2host_node, sub_edges[index].node1.first.id, host_edges[index].node2.first.id)) {
-			sub_node2host_node[sub_edges[index].node2.first.id] = host_edges[index].node1.first.id;
-			sub_node2host_node[sub_edges[index].node1.first.id] = host_edges[index].node2.first.id;
+	if (host_edges[index].point1.first.label == sub_edges[index].point2.first.label && host_edges[index].point2.first.label == sub_edges[index].point1.first.label) {
+		if (is_same_to_old_record(sub_node2host_node, sub_edges[index].point2.first.id, host_edges[index].point1.first.id)
+			&& is_same_to_old_record(sub_node2host_node, sub_edges[index].point1.first.id, host_edges[index].point2.first.id)) {
+			sub_node2host_node[sub_edges[index].point2.first.id] = host_edges[index].point1.first.id;
+			sub_node2host_node[sub_edges[index].point1.first.id] = host_edges[index].point2.first.id;
 			auto [is_ok, m] = is_one_to_one(host_edges, sub_edges, index + 1, sub_node2host_node);
 			if (is_ok) {
 				return { true, m };
 			}
-			sub_node2host_node.erase(sub_edges[index].node2.first.id);
-			sub_node2host_node.erase(sub_edges[index].node1.first.id);
+			sub_node2host_node.erase(sub_edges[index].point2.first.id);
+			sub_node2host_node.erase(sub_edges[index].point1.first.id);
 		}
 	}
 	return { false, {} };
@@ -261,13 +261,13 @@ std::unordered_map<std::string, int> get_lable_count(const std::vector<Edge>& ed
 	std::unordered_map<std::string, int> lable_count;
 	std::unordered_set<int> used_ids;
 	for (const auto& edge : edges) {
-		if (used_ids.count(edge.node1.first.id) == 0) {
-			lable_count[edge.node1.first.label]++;
-			used_ids.insert(edge.node1.first.id);
+		if (used_ids.count(edge.point1.first.id) == 0) {
+			lable_count[edge.point1.first.label]++;
+			used_ids.insert(edge.point1.first.id);
 		}
-		if (used_ids.count(edge.node2.first.id) == 0) {
-			lable_count[edge.node2.first.label]++;
-			used_ids.insert(edge.node2.first.id);
+		if (used_ids.count(edge.point2.first.id) == 0) {
+			lable_count[edge.point2.first.label]++;
+			used_ids.insert(edge.point2.first.id);
 		}
 	}
 	return lable_count;
@@ -300,7 +300,6 @@ std::pair<bool, std::vector<std::unordered_map<int, int>>> handle_isolated_nodes
 			[sub_node2host_node](Node node) {return sub_node2host_node.count(node.id) != 0; }),
 		isolated_nodes.end());
 	
-	auto [is_ok, isoalated_node2host_node] = is_isolated_node_matched(available_host_nodes, isolated_nodes);
 	return is_isolated_node_matched(available_host_nodes, isolated_nodes);
 }
 /// <summary>
@@ -441,19 +440,19 @@ void add_mark_on_edge(Graph& host_graph,
 					  const Graph& redex) {
 	std::unordered_set<int> used_vertices{0};
 	for (const auto& edge : redex.edges) {
-		used_vertices.insert(edge.node1.second.mark);
-		used_vertices.insert(edge.node2.second.mark);
+		used_vertices.insert(edge.point1.second.mark);
+		used_vertices.insert(edge.point2.second.mark);
 	}
 	// add mark on dangle edge and change id on edge's node (mark is assigned to the connected vertex mark)
 	for (auto& host_edge : host_graph.edges) {
 		for (const auto& redex_node : redex.nodes) {
 			bool is_dangle = false;
-			if (host_edge.node1.first == redex_node) {
-				host_edge.node1.first.id = -1; // means this node is deleted
+			if (host_edge.point1.first == redex_node) {
+				host_edge.point1.first.id = -1; // means this node is deleted
 				is_dangle = true;
 			}
-			else if (host_edge.node2.first == redex_node) {
-				host_edge.node2.first.id = -1; // means this node is deleted
+			else if (host_edge.point2.first == redex_node) {
+				host_edge.point2.first.id = -1; // means this node is deleted
 				is_dangle = true;
 			}
 			if (is_dangle) {
@@ -475,9 +474,9 @@ void add_mark_on_edge(Graph& host_graph,
 void add_subgraph(Graph& host_graph, 
 				  const Graph& sub_graph) {
 	auto new_sub_graph = modify_id_on_subgraph(host_graph, sub_graph);
+	connect_nodes_on_dangle_edges(host_graph, new_sub_graph);
 	add_subgraph_nodes(host_graph, new_sub_graph);
 	add_subgraph_edges(host_graph, new_sub_graph);
-	connect_nodes_on_dangle_edges(host_graph, new_sub_graph);
 	remove_vertex_on_edges_and_nodes(host_graph);
 }
 
@@ -515,8 +514,8 @@ Graph modify_id_on_subgraph(const Graph& host_graph, const Graph& sub_graph) {
 	for (auto& edge : temp_graph.edges) {
 		auto p = available_edge_ids.begin();
 		edge.id = *p;
-		edge.node1.first.id = node_map[edge.node1.first.id];
-		edge.node2.first.id = node_map[edge.node2.first.id];
+		edge.point1.first.id = node_map[edge.point1.first.id];
+		edge.point2.first.id = node_map[edge.point2.first.id];
 		available_edge_ids.erase(p);
 	}
 	return temp_graph;
@@ -541,11 +540,11 @@ void connect_nodes_on_dangle_edges(Graph& host_graph,
 	}
 	for (auto& host_edge : host_graph.edges) {
 		if (host_edge.mark != 0) {
-			if (host_edge.node1.first.id == -1) {
-				host_edge.node1 = vertex_mark2node[host_edge.mark];
+			if (host_edge.point1.first.id == -1) {
+				host_edge.point1 = vertex_mark2node[host_edge.mark];
 			}
-			else if (host_edge.node2.first.id == -1) {
-				host_edge.node2 = vertex_mark2node[host_edge.mark];
+			else if (host_edge.point2.first.id == -1) {
+				host_edge.point2 = vertex_mark2node[host_edge.mark];
 			}
 			host_edge.mark = 0;
 		}
@@ -578,8 +577,8 @@ inline void add_subgraph_edges(Graph& host_graph,
 /// <param name="graph">graph</param>
 void remove_vertex_on_edges_and_nodes(Graph& graph) {
 	for (auto& edge : graph.edges) {
-		edge.node1.second = {};
-		edge.node2.second = {};
+		edge.point1.second = {};
+		edge.point2.second = {};
 		edge.mark = 0;
 	}
 	for (auto& node : graph.nodes) {
@@ -605,23 +604,23 @@ bool is_graph_available(const Graph& graph) {
 	std::unordered_map<int, int> node2node;
 	for (const auto& edge : graph.edges) {
 		// cannot exist multiple same edges
-		if ((node2node.count(edge.node1.first.id) && node2node[edge.node1.first.id] == edge.node2.first.id)
-			|| (node2node.count(edge.node2.first.id) && node2node[edge.node2.first.id] == edge.node1.first.id)) {
+		if ((node2node.count(edge.point1.first.id) && node2node[edge.point1.first.id] == edge.point2.first.id)
+			|| (node2node.count(edge.point2.first.id) && node2node[edge.point2.first.id] == edge.point1.first.id)) {
 			return false;
 		}
-		node2node[edge.node1.first.id] = edge.node2.first.id;
-		node2node[edge.node2.first.id] = edge.node1.first.id;
+		node2node[edge.point1.first.id] = edge.point2.first.id;
+		node2node[edge.point2.first.id] = edge.point1.first.id;
 	}
 	return true;
 }
 
 /// <summary>
-/// judge if host graph can be parsed to initial graph by using productions to replace, and return process of change
+/// judge if host graph can be reduced to initial graph by using productions to replace, and return process of change
 /// </summary>
 /// <param name="host_graph">host graph</param>
 /// <param name="productions">productions</param>
-/// <returns>can be parsed, parsing process</returns>
-std::pair<bool, std::vector<Graph>> parse(const Graph& host_graph, const std::vector<Production>& productions) {
+/// <returns>can be reduced, parsing process</returns>
+std::pair<bool, std::vector<Graph>> reduce(const Graph& host_graph, const std::vector<Production>& productions) {
 	if (is_initial_graph(host_graph)) {
 		Node node(0, true, "lambda", {});
 		Graph initial_graph({ node }, {});
@@ -644,7 +643,7 @@ std::pair<bool, std::vector<Graph>> parse(const Graph& host_graph, const std::ve
 			// FOR DEBUGGING
 			//draw_process_in_html({ host_graph, new_graph });
 			//show_process();
-			auto [is_ok, process] = parse(new_graph, productions);
+			auto [is_ok, process] = reduce(new_graph, productions);
 			if (is_ok) {
 				process.insert(process.begin(), host_graph);
 				return{ true, process };

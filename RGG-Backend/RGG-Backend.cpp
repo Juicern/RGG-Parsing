@@ -17,7 +17,7 @@ ADDISON WESLEY LONGMAN AND THE AUTHOR DISCLAIM ALL WARRANTIES WITH REGARD TO THI
 int main() {
 	auto host_graph = read_host_graph();
 	auto productions = read_productions();
-	auto [is_ok, processes] = parse(host_graph, productions);
+	auto [is_ok, processes] = reduce(host_graph, productions);
 	if (!is_ok) {
 		std::cout << "This graph is not this grammar language" << std::endl;
 	}
