@@ -96,39 +96,65 @@ void draw_process_in_html(const std::vector<Graph>& graphs) {
 	file << "<title>RGG Parsing Trace</title>\n";
 	file << "<style>\nbody{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;margin:0;padding:1.5rem;}\n";
 	file << "h1{margin-top:0;}section{background:#fff;border-radius:8px;padding:1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.08);}\n";
-	file << ".graph-container{width:100%;height:320px;border:1px solid #e1e1e1;border-radius:6px;}\n";
+	file << ".graph-container{width:100%;height:420px;border:1px solid #e1e1e1;border-radius:6px;margin-top:1rem;}\n";
+	file << ".controls{display:flex;align-items:center;gap:1rem;margin-top:1rem;}\n";
+	file << ".controls button{background:#0f7bff;color:#fff;border:none;border-radius:4px;padding:0.5rem 1.25rem;font-size:0.95rem;font-weight:600;cursor:pointer;}\n";
+	file << ".controls button:disabled{opacity:0.5;cursor:not-allowed;}\n";
+	file << ".controls span{font-weight:600;}\n";
 	file << "</style>\n";
 	file << "<script src=\"https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js\"></script>\n";
 	file << "</head>\n<body>\n";
 	file << "<h1>RGG Parsing Trace</h1>\n";
-	for (size_t i = 0; i < graphs.size(); ++i) {
-		file << "<section>\n";
-		file << "<h2>Step " << i << "</h2>\n";
-		file << "<div id=\"graph-" << i << "\" class=\"graph-container\"></div>\n";
-		file << "</section>\n";
-	}
+	file << "<section>\n";
+	file << "<div class=\"controls\">\n";
+	file << "<button id=\"prev\">⟵ Previous</button>\n";
+	file << "<span id=\"status\"></span>\n";
+	file << "<button id=\"next\">Next ⟶</button>\n";
+	file << "</div>\n";
+	file << "<div id=\"graph-view\" class=\"graph-container\"></div>\n";
+	file << "</section>\n";
 	file << "<script>\n";
 	file << "const graphs=[\n";
 	for (size_t i = 0; i < graphs.size(); ++i) {
-		file << "{id:\"graph-" << i << "\",elements:" << graph_elements_json(graphs[i]) << "}";
+		file << "{label:\"Step " << i << "\",elements:" << graph_elements_json(graphs[i]) << "}";
 		if (i + 1 != graphs.size()) {
 			file << ",\n";
 		}
 	}
 	file << "\n];\n";
-	file << "graphs.forEach(({id,elements})=>{\n";
-	file << "  cytoscape({\n";
-	file << "    container:document.getElementById(id),\n";
-	file << "    elements:[...elements.nodes,...elements.edges],\n";
-	file << "    layout:{name:'breadthfirst',directed:true,padding:25},\n";
-	file << "    style:[\n";
-	file << "      {selector:'node',style:{'label':'data(label)','text-valign':'center','text-halign':'center','color':'#fff','background-color':ele=>ele.data('terminal')?'#0f7bff':'#ff7b00','width':'60px','height':'60px','font-size':'12px','font-weight':'600'}},\n";
-	file << "      {selector:'edge',style:{'width':2,'line-color':'#555','target-arrow-shape':'triangle','target-arrow-color':'#555','curve-style':'bezier'}},\n";
-	file << "      {selector:':selected',style:{'border-width':3,'border-color':'#111'}}\n";
-	file << "    ],\n";
-	file << "    wheelSensitivity:0.15\n";
-	file << "  });\n";
+	file << "const container=document.getElementById('graph-view');\n";
+	file << "const statusEl=document.getElementById('status');\n";
+	file << "const prevBtn=document.getElementById('prev');\n";
+	file << "const nextBtn=document.getElementById('next');\n";
+	file << "let currentIndex=0;\n";
+	file << "const cy=cytoscape({\n";
+	file << "  container,\n";
+	file << "  elements:[],\n";
+	file << "  layout:{name:'breadthfirst',directed:true,padding:25},\n";
+	file << "  style:[\n";
+	file << "    {selector:'node',style:{'label':'data(label)','text-valign':'center','text-halign':'center','color':'#fff','background-color':ele=>ele.data('terminal')?'#0f7bff':'#ff7b00','width':'60px','height':'60px','font-size':'12px','font-weight':'600'}},\n";
+	file << "    {selector:'edge',style:{'width':2,'line-color':'#555','target-arrow-shape':'triangle','target-arrow-color':'#555','curve-style':'bezier'}},\n";
+	file << "    {selector:':selected',style:{'border-width':3,'border-color':'#111'}}\n";
+	file << "  ],\n";
+	file << "  wheelSensitivity:0.15\n";
 	file << "});\n";
+	file << "function renderGraph(index){\n";
+	file << "  if(graphs.length===0){\n";
+	file << "    statusEl.textContent='No graphs to display.';\n";
+	file << "    prevBtn.disabled=true;\n";
+	file << "    nextBtn.disabled=true;\n";
+	file << "    return;\n";
+	file << "  }\n";
+	file << "  currentIndex=(index+graphs.length)%graphs.length;\n";
+	file << "  const {label,elements}=graphs[currentIndex];\n";
+	file << "  statusEl.textContent=`${label} (${currentIndex+1}/${graphs.length})`;\n";
+	file << "  cy.elements().remove();\n";
+	file << "  cy.add([...elements.nodes,...elements.edges]);\n";
+	file << "  cy.layout({name:'breadthfirst',directed:true,padding:25}).run();\n";
+	file << "}\n";
+	file << "prevBtn.addEventListener('click',()=>renderGraph(currentIndex-1));\n";
+	file << "nextBtn.addEventListener('click',()=>renderGraph(currentIndex+1));\n";
+	file << "renderGraph(0);\n";
 	file << "</script>\n</body>\n</html>\n";
 	file.close();
 }
