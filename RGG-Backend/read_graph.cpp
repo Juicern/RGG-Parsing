@@ -11,21 +11,33 @@ ADDISON WESLEY LONGMAN AND THE AUTHOR DISCLAIM ALL WARRANTIES WITH REGARD TO THI
 
 #pragma once
 #include "read_graph.h"
+#include <filesystem>
+#include <stdexcept>
 
-/// <summary>
-/// get host graph.txt local path
-/// </summary>
-/// <returns></returns>
-inline std::string get_host_graph_path() {
-	return "../host_graph.txt";
+namespace fs = std::filesystem;
+
+std::string resolve_graph_asset(const std::string& file_name) {
+	std::vector<fs::path> candidates;
+	auto cur = fs::current_path();
+	for (int i = 0; i < 5 && !cur.empty(); ++i) {
+		candidates.emplace_back(cur / file_name);
+		candidates.emplace_back(cur / "RGG-Backend" / file_name);
+		cur = cur.parent_path();
+	}
+	for (const auto& candidate : candidates) {
+		if (fs::exists(candidate)) {
+			return candidate.string();
+		}
+	}
+	throw std::runtime_error("Cannot locate " + file_name + ". Run from the repository root or ensure the file exists.");
 }
 
-/// <summary>
-/// get productions.txt local path
-/// </summary>
-/// <returns></returns>
-inline std::string get_productions_path() {
-	return "../productions.txt";
+std::string get_host_graph_path() {
+	return resolve_graph_asset("host_graph.txt");
+}
+
+std::string get_productions_path() {
+	return resolve_graph_asset("productions.txt");
 }
 
 /// <summary>

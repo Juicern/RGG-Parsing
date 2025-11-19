@@ -13,4 +13,3 @@ ADDISON WESLEY LONGMAN AND THE AUTHOR DISCLAIM ALL WARRANTIES WITH REGARD TO THI
 #include "Graph.h"
 void show_process();
 void draw_process_in_html(const std::vector<Graph>&);
-std::string draw_graph_in_div(const Graph&);

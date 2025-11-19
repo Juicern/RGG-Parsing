@@ -24,10 +24,9 @@ int main() {
 	else {
 		draw_process_in_html(processes);
 		std::cout << "This graph is a language of this grammar." << std::endl;
-		std::cout << "And the process is write in the process.html." << std::endl;
+		std::cout << "The parsing trace is stored in process.html (opened in your browser)." << std::endl;
 		show_process();
 	}
 }
-
 
 

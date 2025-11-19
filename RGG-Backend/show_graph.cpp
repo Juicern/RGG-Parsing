@@ -11,65 +11,124 @@ ADDISON WESLEY LONGMAN AND THE AUTHOR DISCLAIM ALL WARRANTIES WITH REGARD TO THI
 
 #pragma once
 #include "show_graph.h"
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
+
+namespace {
+std::string escape_json(const std::string& value) {
+	std::string escaped;
+	escaped.reserve(value.size());
+	for (const auto ch : value) {
+		switch (ch) {
+		case '"':
+			escaped += "\\\"";
+			break;
+		case '\\':
+			escaped += "\\\\";
+			break;
+		case '\n':
+			escaped += "\\n";
+			break;
+		case '\r':
+			escaped += "\\r";
+			break;
+		case '\t':
+			escaped += "\\t";
+			break;
+		default:
+			escaped += ch;
+			break;
+		}
+	}
+	return escaped;
+}
+
+std::string graph_elements_json(const Graph& graph) {
+	std::ostringstream oss;
+	oss << "{nodes:[";
+	for (size_t i = 0; i < graph.nodes.size(); ++i) {
+		const auto& node = graph.nodes[i];
+		oss << "{data:{id:\"node_" << node.id << "\",label:\""
+			<< escape_json(node.label) << "\",terminal:" << (node.is_terminal ? "true" : "false")
+			<< "}}";
+		if (i + 1 != graph.nodes.size()) {
+			oss << ",";
+		}
+	}
+	oss << "],edges:[";
+	for (size_t i = 0; i < graph.edges.size(); ++i) {
+		const auto& edge = graph.edges[i];
+		oss << "{data:{id:\"edge_" << edge.id << "\",source:\"node_" << edge.point1.first.id
+			<< "\",target:\"node_" << edge.point2.first.id << "\"}}";
+		if (i + 1 != graph.edges.size()) {
+			oss << ",";
+		}
+	}
+	oss << "]}";
+	return oss.str();
+}
+}
 
 /// <summary>
-/// open process.html file in browsera
+/// Open process.html file in the default browser (best-effort cross platform)
 /// </summary>
 void show_process() {
+#if defined(_WIN32)
 	system("start process.html");
+#elif defined(__APPLE__)
+	system("open process.html");
+#else
+	system("xdg-open process.html");
+#endif
 }
 
 /// <summary>
-/// draw mermaid to show process 
+/// Draw each graph into process.html using Cytoscape.js
 /// </summary>
-/// <param name="graphs"></param>
+/// <param name="graphs">ordered graphs in the reduction trace</param>
 void draw_process_in_html(const std::vector<Graph>& graphs) {
 	std::ofstream file("process.html", std::ios::out);
-	file << "<!doctype html>\n";
-	file << "<html>\n";
-	file << "<head>\n";
-	file << "<script src=\"mermaid.min.js\"></script>\n";
-	file << "<script>mermaid.initialize({startOnLoad:true});</script>\n";
-	file << "</head>\n";
-	file << "<body>\n";
-	for (const auto& graph : graphs) {
-		file << draw_graph_in_div(graph);
-		file << "<hr/>\n";
+	if (!file.is_open()) {
+		return;
 	}
-	file << "</body>\n";
-	file << "</html>\n";
+	file << "<!doctype html>\n<html>\n<head>\n<meta charset=\"utf-8\" />\n";
+	file << "<title>RGG Parsing Trace</title>\n";
+	file << "<style>\nbody{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;margin:0;padding:1.5rem;}\n";
+	file << "h1{margin-top:0;}section{background:#fff;border-radius:8px;padding:1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.08);}\n";
+	file << ".graph-container{width:100%;height:320px;border:1px solid #e1e1e1;border-radius:6px;}\n";
+	file << "</style>\n";
+	file << "<script src=\"https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js\"></script>\n";
+	file << "</head>\n<body>\n";
+	file << "<h1>RGG Parsing Trace</h1>\n";
+	for (size_t i = 0; i < graphs.size(); ++i) {
+		file << "<section>\n";
+		file << "<h2>Step " << i << "</h2>\n";
+		file << "<div id=\"graph-" << i << "\" class=\"graph-container\"></div>\n";
+		file << "</section>\n";
+	}
+	file << "<script>\n";
+	file << "const graphs=[\n";
+	for (size_t i = 0; i < graphs.size(); ++i) {
+		file << "{id:\"graph-" << i << "\",elements:" << graph_elements_json(graphs[i]) << "}";
+		if (i + 1 != graphs.size()) {
+			file << ",\n";
+		}
+	}
+	file << "\n];\n";
+	file << "graphs.forEach(({id,elements})=>{\n";
+	file << "  cytoscape({\n";
+	file << "    container:document.getElementById(id),\n";
+	file << "    elements:[...elements.nodes,...elements.edges],\n";
+	file << "    layout:{name:'breadthfirst',directed:true,padding:25},\n";
+	file << "    style:[\n";
+	file << "      {selector:'node',style:{'label':'data(label)','text-valign':'center','text-halign':'center','color':'#fff','background-color':ele=>ele.data('terminal')?'#0f7bff':'#ff7b00','width':'60px','height':'60px','font-size':'12px','font-weight':'600'}},\n";
+	file << "      {selector:'edge',style:{'width':2,'line-color':'#555','target-arrow-shape':'triangle','target-arrow-color':'#555','curve-style':'bezier'}},\n";
+	file << "      {selector:':selected',style:{'border-width':3,'border-color':'#111'}}\n";
+	file << "    ],\n";
+	file << "    wheelSensitivity:0.15\n";
+	file << "  });\n";
+	file << "});\n";
+	file << "</script>\n</body>\n</html>\n";
 	file.close();
-}
-
-/// <summary>
-/// draw a graph in mermaid
-/// </summary>
-/// <param name="graph"></param>
-/// <returns></returns>
-std::string draw_graph_in_div(const Graph& graph) {
-	std::string div;
-	div += "<div class = \"mermaid\">\n";
-	div += "graph TD\n";
-	std::unordered_map<int, Node> isolated_nodes;
-	for (const auto& node : graph.nodes) {
-		isolated_nodes[node.id] = node;
-	}
-	for (const auto& edge : graph.edges) {
-		if (isolated_nodes.count(edge.point1.first.id)) {
-			isolated_nodes.erase(edge.point1.first.id);
-		}
-		if (isolated_nodes.count(edge.point2.first.id)) {
-			isolated_nodes.erase(edge.point2.first.id);
-		}
-		div += std::to_string(edge.point1.first.id) + "[" + edge.point1.first.label + "]";
-		div += " --- ";
-		div += std::to_string(edge.point2.first.id) + "[" + edge.point2.first.label + "]";
-		div += "\n";
-	}
-	for (const auto& [id, node] : isolated_nodes) {
-		div += std::to_string(id) + "[" + node.label + "]";
-		div += "\n";
-	}
-	div += "</div>\n";
-	return div;
 }

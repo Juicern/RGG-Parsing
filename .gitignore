@@ -1,0 +1,45 @@
+# Build folders
+build/
+Build/
+x64/
+x86/
+Release/
+Debug/
+
+# Visual Studio
+.vs/
+*.vc.db
+*.opendb
+*.tlog
+*.lastbuildstate
+*.vcxproj.user
+
+# Compiled objects
+*.obj
+*.o
+*.lo
+*.elf
+*.ilk
+*.idb
+*.pdb
+*.lib
+*.dll
+*.exe
+*.app
+*.out
+
+# Precompiled headers and caches
+*.pch
+*.ipch
+
+# Logs and temporary files
+*.log
+*.tmp
+*.cache
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Generated artifacts
+process.html
